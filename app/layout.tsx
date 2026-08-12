@@ -8,13 +8,13 @@ export const metadata: Metadata = {
   openGraph: {
     title: "霓虹防线",
     description: "部署 · 防守 · 生存——一款可直接游玩的中文塔防小游戏。",
-    images: [{ url: "/og.png", width: 1536, height: 864, alt: "霓虹防线游戏封面" }],
+    images: [{ url: "/og-v3.png", width: 1672, height: 941, alt: "霓虹防线游戏封面" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "霓虹防线",
     description: "部署 · 防守 · 生存——一款可直接游玩的中文塔防小游戏。",
-    images: ["/og.png"],
+    images: ["/og-v3.png"],
   },
 };
 

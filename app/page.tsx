@@ -101,6 +101,7 @@ type Tower = Point & {
 };
 
 type Projectile = Point & {
+  kind: TowerKind;
   targetId: number;
   speed: number;
   damage: number;
@@ -278,7 +279,6 @@ const TOWERS: Record<
   TowerKind,
   {
     name: string;
-    glyph: string;
     tagline: string;
     cost: number;
     range: number;
@@ -291,7 +291,6 @@ const TOWERS: Record<
 > = {
   pulse: {
     name: "脉冲塔",
-    glyph: "◎",
     tagline: "均衡 · 高频",
     cost: 70,
     range: 142,
@@ -303,7 +302,6 @@ const TOWERS: Record<
   },
   frost: {
     name: "冷凝塔",
-    glyph: "✦",
     tagline: "减速 · 控场",
     cost: 95,
     range: 124,
@@ -315,7 +313,6 @@ const TOWERS: Record<
   },
   rail: {
     name: "轨道炮",
-    glyph: "⌁",
     tagline: "远程 · 重击",
     cost: 145,
     range: 225,
@@ -412,6 +409,29 @@ function roundedRect(
 ) {
   ctx.beginPath();
   ctx.roundRect(x, y, width, height, radius);
+}
+
+function polygonPath(ctx: CanvasRenderingContext2D, points: Point[]) {
+  ctx.beginPath();
+  ctx.moveTo(points[0].x, points[0].y);
+  points.slice(1).forEach((point) => ctx.lineTo(point.x, point.y));
+  ctx.closePath();
+}
+
+function TowerIcon({ kind, mini = false }: { kind: TowerKind; mini?: boolean }) {
+  const tower = TOWERS[kind];
+  return (
+    <span
+      className={`towerGlyph towerGlyph-${kind}${mini ? " mini" : ""}`}
+      style={{ "--tower-color": tower.color } as React.CSSProperties}
+      aria-hidden="true"
+    >
+      <i className="towerGlyphBase" />
+      <i className="towerGlyphBody" />
+      <i className="towerGlyphBarrel" />
+      <i className="towerGlyphCore" />
+    </span>
+  );
 }
 
 export default function Home() {
@@ -707,6 +727,23 @@ export default function Home() {
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
+    const configureCanvas = () => {
+      const displayWidth = canvas.clientWidth || WIDTH;
+      const renderScale = Math.min(
+        2,
+        Math.max(1, (window.devicePixelRatio || 1) * (displayWidth / WIDTH)),
+      );
+      const pixelWidth = Math.round(WIDTH * renderScale);
+      const pixelHeight = Math.round(HEIGHT * renderScale);
+      if (canvas.width !== pixelWidth || canvas.height !== pixelHeight) {
+        canvas.width = pixelWidth;
+        canvas.height = pixelHeight;
+      }
+      ctx.setTransform(renderScale, 0, 0, renderScale, 0, 0);
+    };
+    configureCanvas();
+    const resizeObserver = new ResizeObserver(configureCanvas);
+    resizeObserver.observe(canvas);
     let frame = 0;
     let previous = performance.now();
     let uiClock = 0;
@@ -823,6 +860,7 @@ export default function Home() {
           tower.angle = Math.atan2(target.y - tower.y, target.x - tower.x);
           if (tower.cooldown <= 0) {
             game.projectiles.push({
+              kind: tower.kind,
               x: tower.x + Math.cos(tower.angle) * 22,
               y: tower.y + Math.sin(tower.angle) * 22,
               targetId: target.id,
@@ -897,153 +935,41 @@ export default function Home() {
       }
     };
 
-    const drawPath = (game: Game) => {
+    const traceActivePath = () => {
       const path = activeLevelRef.current.path;
-      ctx.save();
-      ctx.lineCap = "round";
-      ctx.lineJoin = "round";
-      const trace = () => {
-        ctx.beginPath();
-        ctx.moveTo(path[0].x, path[0].y);
-        path.slice(1).forEach((point) => ctx.lineTo(point.x, point.y));
-      };
-      trace();
-      ctx.strokeStyle = "rgba(143, 221, 227, .15)";
-      ctx.lineWidth = 86;
-      ctx.stroke();
-      trace();
-      ctx.strokeStyle = "#202c45";
-      ctx.lineWidth = 74;
-      ctx.stroke();
-      trace();
-      ctx.strokeStyle = "#34445f";
-      ctx.lineWidth = 62;
-      ctx.stroke();
-      trace();
-      ctx.setLineDash([7, 15]);
-      ctx.lineDashOffset = -game.elapsed * 26;
-      ctx.strokeStyle = "rgba(184, 201, 225, .32)";
-      ctx.lineWidth = 2;
-      ctx.stroke();
-      ctx.restore();
-    };
-
-    const drawTower = (tower: Tower, selected: boolean) => {
-      const spec = TOWERS[tower.kind];
-      const pulse = 0.7 + Math.sin(gameRef.current.elapsed * 3 + tower.id) * 0.2;
-      ctx.save();
-      ctx.translate(tower.x, tower.y);
-      if (selected) {
-        const range = spec.range * (1 + (tower.level - 1) * 0.08);
-        ctx.beginPath();
-        ctx.arc(0, 0, range, 0, Math.PI * 2);
-        ctx.fillStyle = `${spec.color}12`;
-        ctx.fill();
-        ctx.setLineDash([6, 7]);
-        ctx.strokeStyle = `${spec.color}75`;
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-        ctx.setLineDash([]);
-      }
-      ctx.shadowColor = spec.color;
-      ctx.shadowBlur = selected ? 20 : 8;
       ctx.beginPath();
-      ctx.arc(0, 0, 23, 0, Math.PI * 2);
-      ctx.fillStyle = "#172239";
-      ctx.fill();
-      ctx.lineWidth = 3;
-      ctx.strokeStyle = spec.color;
-      ctx.stroke();
-      ctx.shadowBlur = 0;
-      ctx.rotate(tower.angle);
-      if (tower.kind === "rail") {
-        roundedRect(ctx, -5, -7, 35, 14, 5);
-        ctx.fillStyle = "#2b3954";
-        ctx.fill();
-        ctx.fillStyle = spec.color;
-        ctx.fillRect(12, -3, 22, 6);
-      } else if (tower.kind === "frost") {
-        ctx.beginPath();
-        ctx.moveTo(4, 0);
-        ctx.lineTo(28, -7);
-        ctx.lineTo(28, 7);
-        ctx.closePath();
-        ctx.fillStyle = spec.color;
-        ctx.globalAlpha = pulse;
-        ctx.fill();
-      } else {
-        roundedRect(ctx, 1, -6, 29, 12, 5);
-        ctx.fillStyle = spec.color;
-        ctx.globalAlpha = pulse;
-        ctx.fill();
-      }
-      ctx.restore();
-
-      ctx.save();
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      for (let index = 0; index < tower.level; index += 1) {
-        ctx.beginPath();
-        ctx.arc(tower.x + (index - (tower.level - 1) / 2) * 10, tower.y + 31, 2.4, 0, Math.PI * 2);
-        ctx.fillStyle = spec.color;
-        ctx.fill();
-      }
-      ctx.restore();
+      ctx.moveTo(path[0].x, path[0].y);
+      path.slice(1).forEach((point) => ctx.lineTo(point.x, point.y));
     };
 
-    const drawEnemy = (enemy: Enemy) => {
-      const color =
-        enemy.kind === "runner" ? "#dda0c2" : enemy.kind === "tank" ? "#df918e" : "#e5ebf5";
-      const slowed = enemy.slowUntil > gameRef.current.elapsed;
-      ctx.save();
-      ctx.translate(enemy.x, enemy.y);
-      ctx.shadowColor = slowed ? "#b4a4dd" : color;
-      ctx.shadowBlur = 10;
-      ctx.fillStyle = slowed ? "#c3b7e4" : color;
-      if (enemy.kind === "runner") {
-        ctx.rotate(Math.PI / 4);
-        ctx.fillRect(-10, -10, 20, 20);
-      } else if (enemy.kind === "tank") {
-        roundedRect(ctx, -18, -15, 36, 30, 8);
-        ctx.fill();
-        ctx.fillStyle = "#604050";
-        ctx.fillRect(-9, -4, 18, 8);
-      } else {
-        ctx.beginPath();
-        ctx.arc(0, 0, 14, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = "#46536b";
-        ctx.beginPath();
-        ctx.arc(0, 0, 6, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      ctx.restore();
-
-      const barWidth = enemy.kind === "tank" ? 38 : 30;
-      const barY = enemy.y - enemy.radius - 11;
-      roundedRect(ctx, enemy.x - barWidth / 2, barY, barWidth, 4, 2);
-      ctx.fillStyle = "rgba(17, 24, 42, .88)";
-      ctx.fill();
-      const health = Math.max(0, enemy.hp / enemy.maxHp);
-      roundedRect(ctx, enemy.x - barWidth / 2, barY, barWidth * health, 4, 2);
-      ctx.fillStyle = health < 0.35 ? "#dd8b9e" : "#8bcaae";
-      ctx.fill();
-    };
-
-    const draw = () => {
-      const game = gameRef.current;
-      const path = activeLevelRef.current.path;
-      const entranceY = path[0].y;
-      const coreY = path[path.length - 1].y;
+    const drawBackdrop = (game: Game) => {
       const gradient = ctx.createLinearGradient(0, 0, WIDTH, HEIGHT);
-      gradient.addColorStop(0, "#141d32");
-      gradient.addColorStop(0.55, "#1a263e");
-      gradient.addColorStop(1, "#132137");
+      gradient.addColorStop(0, "#101a2d");
+      gradient.addColorStop(0.52, "#17253a");
+      gradient.addColorStop(1, "#102136");
       ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
       ctx.save();
-      ctx.strokeStyle = "rgba(174, 194, 224, .075)";
+      for (let row = 0; row < 4; row += 1) {
+        for (let column = 0; column < 6; column += 1) {
+          const x = 18 + column * 160;
+          const y = 10 + row * 160;
+          roundedRect(ctx, x, y, 124, 124, 18);
+          ctx.fillStyle = (row + column) % 2 === 0 ? "rgba(58, 77, 105, .11)" : "rgba(10, 20, 35, .12)";
+          ctx.fill();
+          ctx.strokeStyle = "rgba(169, 191, 220, .055)";
+          ctx.lineWidth = 1;
+          ctx.stroke();
+          ctx.fillStyle = "rgba(160, 186, 217, .09)";
+          [[12, 12], [112, 12], [12, 112], [112, 112]].forEach(([dx, dy]) => {
+            ctx.beginPath();
+            ctx.arc(x + dx, y + dy, 1.5, 0, Math.PI * 2);
+            ctx.fill();
+          });
+        }
+      }
+      ctx.strokeStyle = "rgba(171, 195, 225, .045)";
       ctx.lineWidth = 1;
       for (let x = 0; x <= WIDTH; x += 80) {
         ctx.beginPath();
@@ -1057,23 +983,427 @@ export default function Home() {
         ctx.lineTo(WIDTH, y);
         ctx.stroke();
       }
+
+      const vignette = ctx.createRadialGradient(WIDTH / 2, HEIGHT / 2, 170, WIDTH / 2, HEIGHT / 2, 600);
+      vignette.addColorStop(0, "rgba(0, 0, 0, 0)");
+      vignette.addColorStop(1, "rgba(3, 9, 21, .48)");
+      ctx.fillStyle = vignette;
+      ctx.fillRect(0, 0, WIDTH, HEIGHT);
       ctx.restore();
 
+      ctx.save();
+      ctx.globalAlpha = 0.12 + Math.sin(game.elapsed * 0.7) * 0.025;
+      const glow = ctx.createRadialGradient(WIDTH * 0.52, HEIGHT * 0.45, 0, WIDTH * 0.52, HEIGHT * 0.45, 330);
+      glow.addColorStop(0, "rgba(113, 186, 199, .3)");
+      glow.addColorStop(1, "rgba(113, 186, 199, 0)");
+      ctx.fillStyle = glow;
+      ctx.fillRect(0, 0, WIDTH, HEIGHT);
+      ctx.restore();
+    };
+
+    const drawPath = (game: Game) => {
+      const path = activeLevelRef.current.path;
+      ctx.save();
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+
+      const layers: Array<{ width: number; color: string; blur?: number }> = [
+        { width: 94, color: "rgba(4, 10, 21, .38)", blur: 14 },
+        { width: 86, color: "#101a2a" },
+        { width: 80, color: "#536176" },
+        { width: 72, color: "#26364d" },
+        { width: 62, color: "#32455f" },
+      ];
+      layers.forEach((layer) => {
+        traceActivePath();
+        ctx.strokeStyle = layer.color;
+        ctx.lineWidth = layer.width;
+        ctx.shadowColor = layer.blur ? "rgba(0, 0, 0, .7)" : "transparent";
+        ctx.shadowBlur = layer.blur ?? 0;
+        ctx.shadowOffsetY = layer.blur ? 9 : 0;
+        ctx.stroke();
+      });
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetY = 0;
+
+      traceActivePath();
+      ctx.strokeStyle = "rgba(191, 215, 232, .19)";
+      ctx.lineWidth = 1;
+      ctx.setLineDash([2, 9]);
+      ctx.stroke();
+
+      traceActivePath();
+      ctx.setLineDash([14, 22]);
+      ctx.lineDashOffset = -game.elapsed * 20;
+      ctx.strokeStyle = "rgba(154, 211, 217, .52)";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      path.slice(1, -1).forEach((point) => {
+        ctx.beginPath();
+        ctx.arc(point.x, point.y, 35, 0, Math.PI * 2);
+        ctx.strokeStyle = "rgba(174, 195, 220, .14)";
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(point.x, point.y, 29, 0, Math.PI * 2);
+        ctx.strokeStyle = "rgba(8, 16, 29, .34)";
+        ctx.stroke();
+      });
+      ctx.restore();
+    };
+
+    const drawPadFoundations = () => {
+      ctx.save();
+      for (const { point } of activeLevelRef.current.pads) {
+        const occupied = gameRef.current.towers.some((tower) => distance(point, tower) < 1);
+        ctx.translate(point.x, point.y);
+        ctx.beginPath();
+        ctx.ellipse(0, 10, 25, 12, 0, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(3, 8, 18, .48)";
+        ctx.fill();
+        polygonPath(ctx, [
+          { x: -19, y: -15 }, { x: 19, y: -15 }, { x: 24, y: -9 }, { x: 24, y: 9 },
+          { x: 19, y: 15 }, { x: -19, y: 15 }, { x: -24, y: 9 }, { x: -24, y: -9 },
+        ]);
+        ctx.fillStyle = occupied ? "#1a283c" : "rgba(26, 40, 59, .86)";
+        ctx.fill();
+        ctx.strokeStyle = occupied ? "rgba(151, 210, 216, .34)" : "rgba(156, 182, 210, .23)";
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(0, 0, 13, 0, Math.PI * 2);
+        ctx.strokeStyle = "rgba(166, 195, 222, .14)";
+        ctx.stroke();
+        [[-17, -8], [17, -8], [-17, 8], [17, 8]].forEach(([x, y]) => {
+          ctx.beginPath();
+          ctx.arc(x, y, 1.6, 0, Math.PI * 2);
+          ctx.fillStyle = "rgba(190, 210, 230, .32)";
+          ctx.fill();
+        });
+        ctx.translate(-point.x, -point.y);
+      }
+      ctx.restore();
+    };
+
+    const drawTowerBase = (tower: Tower, selected: boolean) => {
+      const spec = TOWERS[tower.kind];
+      if (selected) {
+        const range = spec.range * (1 + (tower.level - 1) * 0.08);
+        ctx.beginPath();
+        ctx.arc(0, 0, range, 0, Math.PI * 2);
+        ctx.fillStyle = `${spec.color}0d`;
+        ctx.fill();
+        ctx.setLineDash([7, 8]);
+        ctx.strokeStyle = `${spec.color}6c`;
+        ctx.lineWidth = 1.4;
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+      ctx.beginPath();
+      ctx.ellipse(0, 12, 25, 11, 0, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(2, 7, 16, .54)";
+      ctx.fill();
+      polygonPath(ctx, [
+        { x: -21, y: -11 }, { x: -11, y: -21 }, { x: 11, y: -21 }, { x: 21, y: -11 },
+        { x: 21, y: 11 }, { x: 11, y: 21 }, { x: -11, y: 21 }, { x: -21, y: 11 },
+      ]);
+      ctx.fillStyle = "#17253a";
+      ctx.fill();
+      ctx.lineWidth = selected ? 2.2 : 1.5;
+      ctx.strokeStyle = selected ? spec.color : "#53647b";
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(0, 0, 14.5, 0, Math.PI * 2);
+      ctx.fillStyle = "#23344d";
+      ctx.fill();
+      ctx.strokeStyle = `${spec.color}75`;
+      ctx.lineWidth = 1.4;
+      ctx.stroke();
+      for (let index = 0; index < tower.level; index += 1) {
+        const angle = Math.PI * 0.75 + index * Math.PI * 0.75;
+        ctx.beginPath();
+        ctx.arc(Math.cos(angle) * 18, Math.sin(angle) * 18, 2.2, 0, Math.PI * 2);
+        ctx.fillStyle = spec.color;
+        ctx.fill();
+      }
+      if (tower.level >= 2) {
+        ctx.strokeStyle = `${spec.color}5c`;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(0, 0, 19, -Math.PI * 0.72, Math.PI * 0.1);
+        ctx.stroke();
+      }
+    };
+
+    const drawTower = (tower: Tower, selected: boolean) => {
+      const spec = TOWERS[tower.kind];
+      const pulse = 0.78 + Math.sin(gameRef.current.elapsed * 3.2 + tower.id) * 0.16;
+      ctx.save();
+      ctx.translate(tower.x, tower.y);
+      drawTowerBase(tower, selected);
+      ctx.rotate(tower.angle);
+
+      if (tower.kind === "pulse") {
+        roundedRect(ctx, -10, -10, 23, 20, 7);
+        ctx.fillStyle = "#293d58";
+        ctx.fill();
+        ctx.strokeStyle = "#62758d";
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+        [-6, 6].forEach((y) => {
+          roundedRect(ctx, 5, y - 3.2, 29, 6.4, 2.5);
+          ctx.fillStyle = "#1d2b40";
+          ctx.fill();
+          ctx.strokeStyle = `${spec.color}aa`;
+          ctx.stroke();
+          ctx.fillStyle = spec.color;
+          ctx.globalAlpha = pulse;
+          ctx.fillRect(25, y - 1.4, 9, 2.8);
+          ctx.globalAlpha = 1;
+        });
+        ctx.beginPath();
+        ctx.arc(-2, 0, 6.5, 0, Math.PI * 2);
+        ctx.fillStyle = spec.color;
+        ctx.globalAlpha = pulse;
+        ctx.fill();
+      } else if (tower.kind === "frost") {
+        roundedRect(ctx, -10, -9, 20, 18, 6);
+        ctx.fillStyle = "#293650";
+        ctx.fill();
+        for (let index = -1; index <= 1; index += 1) {
+          ctx.save();
+          ctx.translate(4, index * 7);
+          polygonPath(ctx, [
+            { x: -4, y: 0 }, { x: 12, y: -5 }, { x: 28, y: 0 }, { x: 12, y: 5 },
+          ]);
+          ctx.fillStyle = index === 0 ? spec.color : "#766da8";
+          ctx.globalAlpha = index === 0 ? pulse : 0.76;
+          ctx.fill();
+          ctx.strokeStyle = "rgba(224, 219, 255, .58)";
+          ctx.lineWidth = 1;
+          ctx.stroke();
+          ctx.restore();
+        }
+        ctx.globalAlpha = 1;
+        ctx.beginPath();
+        ctx.arc(2, 0, 5, 0, Math.PI * 2);
+        ctx.fillStyle = "#d9d2f4";
+        ctx.fill();
+      } else {
+        roundedRect(ctx, -13, -12, 26, 24, 6);
+        ctx.fillStyle = "#2d394e";
+        ctx.fill();
+        ctx.strokeStyle = "#657286";
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+        [-6, 6].forEach((y) => {
+          roundedRect(ctx, -1, y - 3.4, 43, 6.8, 2);
+          ctx.fillStyle = "#182538";
+          ctx.fill();
+          ctx.strokeStyle = "#596a80";
+          ctx.stroke();
+        });
+        ctx.fillStyle = spec.color;
+        ctx.globalAlpha = pulse;
+        ctx.fillRect(5, -1.5, 38, 3);
+        ctx.globalAlpha = 1;
+        roundedRect(ctx, 31, -9, 10, 18, 3);
+        ctx.strokeStyle = `${spec.color}a5`;
+        ctx.stroke();
+      }
+      if (tower.level === 3) {
+        ctx.rotate(-tower.angle);
+        ctx.beginPath();
+        ctx.moveTo(-6, -20);
+        ctx.lineTo(-2, -29);
+        ctx.strokeStyle = spec.color;
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(-2, -30, 2, 0, Math.PI * 2);
+        ctx.fillStyle = spec.color;
+        ctx.fill();
+      }
+      ctx.restore();
+    };
+
+    const drawEnemy = (enemy: Enemy) => {
+      const color = enemy.kind === "runner" ? "#dda0c2" : enemy.kind === "tank" ? "#df918e" : "#dce7f3";
+      const slowed = enemy.slowUntil > gameRef.current.elapsed;
+      const target = activeLevelRef.current.path[enemy.pathIndex];
+      const angle = target ? Math.atan2(target.y - enemy.y, target.x - enemy.x) : 0;
+      const bob = enemy.kind === "runner" ? Math.sin(gameRef.current.elapsed * 12 + enemy.id) * 1.4 : 0;
+      ctx.save();
+      ctx.translate(enemy.x, enemy.y + bob);
+      ctx.rotate(angle);
+      ctx.beginPath();
+      ctx.ellipse(-2, 8, enemy.radius * 0.95, enemy.radius * 0.46, 0, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(2, 7, 16, .46)";
+      ctx.fill();
+
+      if (enemy.kind === "runner") {
+        ctx.strokeStyle = "rgba(221, 160, 194, .28)";
+        ctx.lineWidth = 2;
+        [-5, 5].forEach((y) => {
+          ctx.beginPath();
+          ctx.moveTo(-27, y);
+          ctx.lineTo(-16, y);
+          ctx.stroke();
+        });
+        polygonPath(ctx, [
+          { x: 16, y: 0 }, { x: -7, y: -12 }, { x: -4, y: -4 }, { x: -15, y: 0 },
+          { x: -4, y: 4 }, { x: -7, y: 12 },
+        ]);
+        ctx.fillStyle = "#342d48";
+        ctx.fill();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(4, 0, 3.5, 0, Math.PI * 2);
+        ctx.fillStyle = color;
+        ctx.fill();
+      } else if (enemy.kind === "tank") {
+        [-13, 13].forEach((y) => {
+          roundedRect(ctx, -19, y - 4, 34, 8, 3);
+          ctx.fillStyle = "#2a2635";
+          ctx.fill();
+          ctx.strokeStyle = "#6c4a5b";
+          ctx.lineWidth = 1.2;
+          ctx.stroke();
+          for (let x = -14; x <= 10; x += 8) {
+            ctx.beginPath();
+            ctx.arc(x, y, 1.6, 0, Math.PI * 2);
+            ctx.fillStyle = color;
+            ctx.globalAlpha = 0.48;
+            ctx.fill();
+          }
+        });
+        ctx.globalAlpha = 1;
+        polygonPath(ctx, [
+          { x: -15, y: -11 }, { x: 10, y: -11 }, { x: 19, y: -5 }, { x: 19, y: 5 },
+          { x: 10, y: 11 }, { x: -15, y: 11 },
+        ]);
+        ctx.fillStyle = "#4a3441";
+        ctx.fill();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        roundedRect(ctx, -4, -7, 15, 14, 4);
+        ctx.fillStyle = "#291f2c";
+        ctx.fill();
+        ctx.fillStyle = color;
+        ctx.fillRect(7, -2, 13, 4);
+      } else {
+        ctx.beginPath();
+        ctx.arc(0, 0, 14, 0, Math.PI * 2);
+        ctx.fillStyle = "#273549";
+        ctx.fill();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        polygonPath(ctx, [
+          { x: 4, y: -6 }, { x: 18, y: -10 }, { x: 13, y: 0 }, { x: 18, y: 10 }, { x: 4, y: 6 },
+        ]);
+        ctx.fillStyle = "#34465c";
+        ctx.fill();
+        ctx.strokeStyle = "rgba(220, 231, 243, .6)";
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(3, 0, 5, 0, Math.PI * 2);
+        ctx.fillStyle = "#dd8b9e";
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(4, -1, 1.5, 0, Math.PI * 2);
+        ctx.fillStyle = "#fff0f2";
+        ctx.fill();
+      }
+
+      if (slowed) {
+        ctx.globalAlpha = 0.86;
+        ctx.beginPath();
+        ctx.arc(0, 0, enemy.radius + 6 + Math.sin(gameRef.current.elapsed * 5) * 1.5, 0, Math.PI * 2);
+        ctx.strokeStyle = "#b4a4dd";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        [0, 2.1, 4.2].forEach((a) => {
+          const x = Math.cos(a) * (enemy.radius + 5);
+          const y = Math.sin(a) * (enemy.radius + 5);
+          polygonPath(ctx, [{ x, y: y - 3 }, { x: x + 2, y }, { x, y: y + 3 }, { x: x - 2, y }]);
+          ctx.fillStyle = "#d8d0f2";
+          ctx.fill();
+        });
+      }
+      ctx.restore();
+
+      const barWidth = enemy.kind === "tank" ? 42 : 32;
+      const barY = enemy.y - enemy.radius - 12;
+      roundedRect(ctx, enemy.x - barWidth / 2 - 1, barY - 1, barWidth + 2, 7, 3);
+      ctx.fillStyle = "rgba(9, 15, 27, .9)";
+      ctx.fill();
+      const health = Math.max(0, enemy.hp / enemy.maxHp);
+      roundedRect(ctx, enemy.x - barWidth / 2, barY, barWidth * health, 5, 2.5);
+      ctx.fillStyle = health < 0.35 ? "#dd8b9e" : "#8bcaae";
+      ctx.fill();
+      const highlightWidth = Math.max(0, barWidth * health - 4);
+      if (highlightWidth > 0) {
+        ctx.fillStyle = "rgba(255,255,255,.22)";
+        ctx.fillRect(enemy.x - barWidth / 2 + 2, barY + 1, highlightWidth, 1);
+      }
+    };
+
+    const draw = () => {
+      const game = gameRef.current;
+      const path = activeLevelRef.current.path;
+      const entranceY = path[0].y;
+      const coreY = path[path.length - 1].y;
+      drawBackdrop(game);
       drawPath(game);
+      drawPadFoundations();
 
       ctx.save();
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.font = '800 18px "Microsoft YaHei UI", "PingFang SC", sans-serif';
-      ctx.fillStyle = "#8fdde3";
-      ctx.fillText("入口", 30, entranceY - 42);
-      ctx.fillStyle = "#dd8b9e";
-      ctx.fillText("核心", 925, coreY - 42);
-      ctx.beginPath();
-      ctx.arc(925, coreY, 23 + Math.sin(game.elapsed * 3) * 3, 0, Math.PI * 2);
-      ctx.strokeStyle = "rgba(221, 139, 158, .74)";
-      ctx.lineWidth = 3;
+      ctx.font = '800 15px "Microsoft YaHei UI", "PingFang SC", sans-serif';
+      roundedRect(ctx, 5, entranceY - 60, 60, 27, 8);
+      ctx.fillStyle = "rgba(19, 43, 58, .88)";
+      ctx.fill();
+      ctx.strokeStyle = "rgba(143, 221, 227, .48)";
       ctx.stroke();
+      ctx.fillStyle = "#b5e4e7";
+      ctx.fillText("入口", 35, entranceY - 46);
+
+      roundedRect(ctx, 893, coreY - 60, 64, 27, 8);
+      ctx.fillStyle = "rgba(59, 31, 46, .88)";
+      ctx.fill();
+      ctx.strokeStyle = "rgba(221, 139, 158, .48)";
+      ctx.stroke();
+      ctx.fillStyle = "#efb1bd";
+      ctx.fillText("核心", 925, coreY - 46);
+
+      ctx.shadowColor = "#df918e";
+      ctx.shadowBlur = 16;
+      ctx.beginPath();
+      ctx.arc(925, coreY, 28 + Math.sin(game.elapsed * 2.5) * 2, 0, Math.PI * 2);
+      ctx.strokeStyle = "rgba(221, 139, 158, .36)";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+      ctx.beginPath();
+      ctx.arc(925, coreY, 20, -game.elapsed * 0.55, Math.PI * 1.45 - game.elapsed * 0.55);
+      ctx.strokeStyle = "rgba(237, 165, 177, .86)";
+      ctx.lineWidth = 3.5;
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(925, coreY, 11, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(112, 50, 69, .92)";
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(925, coreY, 5 + Math.sin(game.elapsed * 4) * 1.5, 0, Math.PI * 2);
+      ctx.fillStyle = "#f0a7b4";
+      ctx.fill();
       ctx.restore();
 
       const hover = hoverRef.current;
@@ -1115,25 +1445,59 @@ export default function Home() {
       }
 
       game.towers.forEach((tower) => drawTower(tower, tower.id === selectedTowerRef.current));
+      game.enemies.forEach(drawEnemy);
 
       for (const projectile of game.projectiles) {
+        const target = game.enemies.find((enemy) => enemy.id === projectile.targetId);
+        const angle = target ? Math.atan2(target.y - projectile.y, target.x - projectile.x) : 0;
         ctx.save();
+        ctx.translate(projectile.x, projectile.y);
+        ctx.rotate(angle);
+        ctx.globalCompositeOperation = "lighter";
         ctx.shadowColor = projectile.color;
-        ctx.shadowBlur = 13;
-        ctx.beginPath();
-        ctx.arc(projectile.x, projectile.y, projectile.size, 0, Math.PI * 2);
-        ctx.fillStyle = projectile.color;
-        ctx.fill();
+        ctx.shadowBlur = projectile.kind === "rail" ? 15 : 10;
+        if (projectile.kind === "rail") {
+          const beam = ctx.createLinearGradient(-38, 0, 8, 0);
+          beam.addColorStop(0, "rgba(228, 189, 132, 0)");
+          beam.addColorStop(0.72, "rgba(228, 189, 132, .54)");
+          beam.addColorStop(1, "#fff3ce");
+          ctx.fillStyle = beam;
+          ctx.fillRect(-38, -2.5, 44, 5);
+          ctx.fillStyle = "#fff7dc";
+          ctx.fillRect(-10, -1, 18, 2);
+        } else if (projectile.kind === "frost") {
+          ctx.rotate(game.elapsed * 5 + projectile.x * 0.02);
+          polygonPath(ctx, [
+            { x: 0, y: -7 }, { x: 4.5, y: 0 }, { x: 0, y: 7 }, { x: -4.5, y: 0 },
+          ]);
+          ctx.fillStyle = "#dcd5f5";
+          ctx.fill();
+          ctx.strokeStyle = projectile.color;
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+        } else {
+          const tail = ctx.createLinearGradient(-22, 0, 5, 0);
+          tail.addColorStop(0, "rgba(143, 221, 227, 0)");
+          tail.addColorStop(1, projectile.color);
+          ctx.fillStyle = tail;
+          roundedRect(ctx, -22, -2, 28, 4, 2);
+          ctx.fill();
+          ctx.beginPath();
+          ctx.arc(4, 0, projectile.size, 0, Math.PI * 2);
+          ctx.fillStyle = "#e8ffff";
+          ctx.fill();
+        }
         ctx.restore();
       }
-
-      game.enemies.forEach(drawEnemy);
 
       for (const particle of game.particles) {
         ctx.save();
         ctx.globalAlpha = particle.life / particle.maxLife;
+        ctx.translate(particle.x, particle.y);
+        ctx.rotate(Math.atan2(particle.vy, particle.vx));
         ctx.fillStyle = particle.color;
-        ctx.fillRect(particle.x, particle.y, particle.size, particle.size);
+        roundedRect(ctx, -particle.size * 1.8, -particle.size * 0.45, particle.size * 3.6, particle.size * 0.9, particle.size * 0.4);
+        ctx.fill();
         ctx.restore();
       }
 
@@ -1164,7 +1528,10 @@ export default function Home() {
       frame = requestAnimationFrame(loop);
     };
     frame = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(frame);
+    return () => {
+      resizeObserver.disconnect();
+      cancelAnimationFrame(frame);
+    };
   }, [screen]);
 
   useEffect(
@@ -1377,7 +1744,7 @@ export default function Home() {
           </section>
         )}
 
-        <footer className="menuFooter"><span>NEON GRID DEFENSE // BUILD 02.7</span><span>游客档案仅保存在当前设备</span></footer>
+        <footer className="menuFooter"><span>NEON GRID DEFENSE // BUILD 03.0</span><span>游客档案仅保存在当前设备</span></footer>
       </main>
     );
   }
@@ -1468,8 +1835,6 @@ export default function Home() {
           <div className="canvasWrap">
             <canvas
               ref={canvasRef}
-              width={WIDTH}
-              height={HEIGHT}
               aria-hidden="true"
             />
             <div
@@ -1567,9 +1932,7 @@ export default function Home() {
                   aria-pressed={selectedKind === kind}
                 >
                   <span className="hotkey">{index + 1}</span>
-                  <span className="towerGlyph" style={{ "--tower-color": tower.color } as React.CSSProperties}>
-                    {tower.glyph}
-                  </span>
+                  <TowerIcon kind={kind} />
                   <span className="towerCopy">
                     <b>{tower.name}</b>
                     <small>{tower.tagline}</small>
@@ -1584,9 +1947,7 @@ export default function Home() {
             {selectedTower && selectedSpec ? (
               <>
                 <div className="inspectorTop">
-                  <span className="towerGlyph mini" style={{ "--tower-color": selectedSpec.color } as React.CSSProperties}>
-                    {selectedSpec.glyph}
-                  </span>
+                  <TowerIcon kind={selectedTower.kind} mini />
                   <div>
                     <small>已选单元</small>
                     <h3>{selectedSpec.name} <em>{selectedTower.level} 级</em></h3>
