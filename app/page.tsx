@@ -5,10 +5,7 @@ import { useEffect, useRef, useState } from "react";
 const WIDTH = 960;
 const HEIGHT = 620;
 const FINAL_WAVE = 8;
-const GRID_SIZE = 48;
-const GRID_TOP = 22;
-const GRID_COLUMNS = WIDTH / GRID_SIZE;
-const GRID_ROWS = 12;
+const PAD_SIZE = 46;
 
 type Point = { x: number; y: number };
 type TowerKind = "pulse" | "frost" | "rail";
@@ -105,6 +102,26 @@ const PATH: Point[] = [
   { x: 996, y: 236 },
 ];
 
+const BUILD_PADS: Array<{ id: string; point: Point }> = [
+  { id: "A1", point: { x: 72, y: 52 } },
+  { id: "A2", point: { x: 96, y: 202 } },
+  { id: "B1", point: { x: 244, y: 202 } },
+  { id: "B2", point: { x: 250, y: 360 } },
+  { id: "B3", point: { x: 292, y: 182 } },
+  { id: "C1", point: { x: 290, y: 54 } },
+  { id: "C2", point: { x: 442, y: 34 } },
+  { id: "C3", point: { x: 520, y: 180 } },
+  { id: "D1", point: { x: 526, y: 330 } },
+  { id: "D2", point: { x: 526, y: 486 } },
+  { id: "E1", point: { x: 680, y: 330 } },
+  { id: "E2", point: { x: 684, y: 486 } },
+  { id: "E3", point: { x: 714, y: 172 } },
+  { id: "F1", point: { x: 864, y: 166 } },
+  { id: "F2", point: { x: 868, y: 310 } },
+  { id: "F3", point: { x: 890, y: 408 } },
+  { id: "F4", point: { x: 885, y: 490 } },
+];
+
 const TOWERS: Record<
   TowerKind,
   {
@@ -198,34 +215,6 @@ const toUi = (game: Game, version = 0): UiState => ({
 
 const distance = (a: Point, b: Point) => Math.hypot(a.x - b.x, a.y - b.y);
 
-function pointToSegment(point: Point, a: Point, b: Point) {
-  const dx = b.x - a.x;
-  const dy = b.y - a.y;
-  const lengthSq = dx * dx + dy * dy;
-  if (!lengthSq) return distance(point, a);
-  const t = Math.max(
-    0,
-    Math.min(1, ((point.x - a.x) * dx + (point.y - a.y) * dy) / lengthSq),
-  );
-  return distance(point, { x: a.x + t * dx, y: a.y + t * dy });
-}
-
-function isBuildableTerrain(point: Point) {
-  return !PATH.slice(0, -1).some((start, index) =>
-    pointToSegment(point, start, PATH[index + 1]) < 61,
-  );
-}
-
-const GRID_CELLS = Array.from({ length: GRID_COLUMNS * GRID_ROWS }, (_, index) => {
-  const column = index % GRID_COLUMNS;
-  const row = Math.floor(index / GRID_COLUMNS);
-  const point = {
-    x: column * GRID_SIZE + GRID_SIZE / 2,
-    y: GRID_TOP + row * GRID_SIZE + GRID_SIZE / 2,
-  };
-  return { column, row, point, buildable: isBuildableTerrain(point) };
-});
-
 function roundedRect(
   ctx: CanvasRenderingContext2D,
   x: number,
@@ -274,13 +263,12 @@ export default function Home() {
   };
 
   const canPlace = (point: Point) => {
-    if (!isBuildableTerrain(point)) return false;
-    return !gameRef.current.towers.some((tower) => distance(point, tower) < GRID_SIZE * 0.8);
+    return !gameRef.current.towers.some((tower) => distance(point, tower) < 1);
   };
 
-  const handleGridCell = (point: Point) => {
+  const handleBuildPad = (point: Point) => {
     const existing = gameRef.current.towers.find(
-      (tower) => distance(point, tower) < GRID_SIZE * 0.25,
+      (tower) => distance(point, tower) < 1,
     );
     if (existing) {
       chooseBuiltTower(existing.id);
@@ -774,11 +762,11 @@ export default function Home() {
         ctx.save();
         roundedRect(
           ctx,
-          hover.x - GRID_SIZE / 2 + 3,
-          hover.y - GRID_SIZE / 2 + 3,
-          GRID_SIZE - 6,
-          GRID_SIZE - 6,
-          5,
+          hover.x - PAD_SIZE / 2,
+          hover.y - PAD_SIZE / 2,
+          PAD_SIZE,
+          PAD_SIZE,
+          10,
         );
         ctx.fillStyle = valid ? `${spec.color}28` : "rgba(255, 84, 112, .2)";
         ctx.fill();
@@ -950,7 +938,7 @@ export default function Home() {
               <span>区域地图</span>
               <b>河岸数据港</b>
             </div>
-            <p>选择塔后点击发光格部署 · 点击塔查看详情</p>
+            <p>选择塔后点击道路两侧的部署点 · 点击塔查看详情</p>
           </div>
           <div className="canvasWrap">
             <canvas
@@ -960,26 +948,30 @@ export default function Home() {
               aria-hidden="true"
             />
             <div
-              className="placementGrid"
-              data-testid="placement-grid"
+              className="placementPads"
+              data-testid="placement-pads"
               role="group"
-              aria-label="炮塔部署格。选择防御塔后点击可部署方格。"
+              aria-label="道路两侧的炮塔部署点"
               onPointerLeave={() => {
                 hoverRef.current = null;
               }}
             >
-              {GRID_CELLS.map(({ column, row, point, buildable }) => {
+              {BUILD_PADS.map(({ id, point }) => {
                 const tower = gameRef.current.towers.find(
-                  (item) => distance(point, item) < GRID_SIZE * 0.25,
+                  (item) => distance(point, item) < 1,
                 );
                 const affordable = selectedKind ? ui.gold >= TOWERS[selectedKind].cost : true;
                 return (
                   <button
                     type="button"
-                    key={`${column}-${row}`}
-                    data-cell={`${column}-${row}`}
-                    className={`gridCell ${buildable ? "buildable" : "blocked"} ${tower ? "occupied" : ""} ${!affordable ? "unaffordable" : ""}`}
-                    disabled={!buildable || ui.won || ui.lost}
+                    key={id}
+                    data-pad={id}
+                    className={`buildPad ${tower ? "occupied" : ""} ${!affordable ? "unaffordable" : ""}`}
+                    style={{
+                      left: `${(point.x / WIDTH) * 100}%`,
+                      top: `${(point.y / HEIGHT) * 100}%`,
+                    }}
+                    disabled={ui.won || ui.lost}
                     onPointerEnter={() => {
                       hoverRef.current = point;
                     }}
@@ -989,16 +981,14 @@ export default function Home() {
                     onBlur={() => {
                       hoverRef.current = null;
                     }}
-                    onClick={() => handleGridCell(point)}
+                    onClick={() => handleBuildPad(point)}
                     aria-label={
-                      !buildable
-                        ? `第 ${row + 1} 行第 ${column + 1} 列，航道格`
-                        : tower
-                          ? `第 ${row + 1} 行第 ${column + 1} 列，已部署${TOWERS[tower.kind].name}`
-                          : `第 ${row + 1} 行第 ${column + 1} 列，可部署`
+                      tower
+                        ? `部署点 ${id}，已部署${TOWERS[tower.kind].name}`
+                        : `部署点 ${id}，可部署`
                     }
                   >
-                    {tower ? <span aria-hidden="true">{tower.level}</span> : null}
+                    <span aria-hidden="true">{tower ? tower.level : "+"}</span>
                   </button>
                 );
               })}
@@ -1007,7 +997,7 @@ export default function Home() {
             {ui.wave === 0 && gameRef.current.towers.length === 0 && (
               <div className="firstHint" aria-hidden="true">
                 <span>01</span>
-                <p><b>选择防御塔</b>点击发光方格进行部署</p>
+                <p><b>选择防御塔</b>点击道路两侧的圆形部署点</p>
               </div>
             )}
             {(ui.won || ui.lost) && (
