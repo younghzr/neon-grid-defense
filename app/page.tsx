@@ -4,12 +4,54 @@ import { useEffect, useRef, useState } from "react";
 
 const WIDTH = 960;
 const HEIGHT = 620;
-const FINAL_WAVE = 8;
 const PAD_SIZE = 46;
 
 type Point = { x: number; y: number };
 type TowerKind = "pulse" | "frost" | "rail";
 type EnemyKind = "drone" | "runner" | "tank";
+type Screen = "home" | "campaign" | "modes" | "game";
+
+type RuleSet = {
+  finalWave: number | null;
+  initialGold: number;
+  lives: number;
+  enemyHealth: number;
+  enemySpeed: number;
+  enemyCount: number;
+  spawnRate: number;
+  waveBonus: number;
+  runnerWave: number;
+  tankWave: number;
+};
+
+type LevelConfig = {
+  id: number;
+  name: string;
+  sector: string;
+  description: string;
+  difficulty: string;
+  accent: string;
+  path: Point[];
+  pads: Array<{ id: string; point: Point }>;
+  rules: RuleSet;
+};
+
+type ModeConfig = {
+  id: "survival" | "blitz" | "hardcore";
+  name: string;
+  badge: string;
+  description: string;
+  levelId: number;
+  accent: string;
+  rules: RuleSet;
+};
+
+type ActiveMission = {
+  category: string;
+  title: string;
+  level: LevelConfig;
+  rules: RuleSet;
+};
 
 type Enemy = Point & {
   id: number;
@@ -89,34 +131,123 @@ type UiState = Pick<
   | "spawnTotal"
 > & { enemies: number; version: number };
 
-const PATH: Point[] = [
-  { x: -40, y: 150 },
-  { x: 160, y: 150 },
-  { x: 160, y: 310 },
-  { x: 400, y: 310 },
-  { x: 400, y: 150 },
-  { x: 640, y: 150 },
-  { x: 640, y: 470 },
-  { x: 800, y: 470 },
-  { x: 800, y: 310 },
-  { x: 1000, y: 310 },
+const pointList = (items: Array<[number, number]>): Point[] =>
+  items.map(([x, y]) => ({ x, y }));
+
+const padList = (items: Array<[string, number, number]>) =>
+  items.map(([id, x, y]) => ({ id, point: { x, y } }));
+
+const makeRules = (overrides: Partial<RuleSet> = {}): RuleSet => ({
+  finalWave: 8,
+  initialGold: 230,
+  lives: 12,
+  enemyHealth: 1,
+  enemySpeed: 1,
+  enemyCount: 1,
+  spawnRate: 1,
+  waveBonus: 1,
+  runnerWave: 2,
+  tankWave: 3,
+  ...overrides,
+});
+
+const LEVELS: LevelConfig[] = [
+  {
+    id: 1,
+    name: "河岸数据港",
+    sector: "第 07 区",
+    description: "标准折线路线，适合熟悉三类防御塔。",
+    difficulty: "普通",
+    accent: "#54f1ff",
+    path: pointList([[-40, 150], [160, 150], [160, 310], [400, 310], [400, 150], [640, 150], [640, 470], [800, 470], [800, 310], [1000, 310]]),
+    pads: padList([["A1", 80, 70], ["A2", 80, 230], ["B1", 240, 230], ["B2", 320, 230], ["B3", 320, 390], ["C1", 480, 70], ["C2", 480, 230], ["C3", 560, 230], ["D1", 720, 230], ["D2", 560, 390], ["D3", 720, 390], ["D4", 720, 550], ["E1", 880, 230], ["E2", 880, 390]]),
+    rules: makeRules({ finalWave: 6, initialGold: 250, enemyHealth: 0.92, enemySpeed: 0.96, waveBonus: 1.12 }),
+  },
+  {
+    id: 2,
+    name: "双湾转运站",
+    sector: "第 12 区",
+    description: "两次深入折返，弯道火力覆盖尤其重要。",
+    difficulty: "普通+",
+    accent: "#7ed8ff",
+    path: pointList([[-40, 150], [240, 150], [240, 470], [480, 470], [480, 230], [720, 230], [720, 470], [1000, 470]]),
+    pads: padList([["A1", 80, 70], ["A2", 160, 230], ["B1", 320, 230], ["B2", 160, 390], ["B3", 320, 390], ["C1", 400, 550], ["C2", 560, 390], ["C3", 560, 150], ["D1", 640, 310], ["D2", 800, 310], ["D3", 800, 390], ["E1", 880, 550]]),
+    rules: makeRules({ finalWave: 7, initialGold: 240, enemyHealth: 0.98, enemyCount: 1.04, waveBonus: 1.05 }),
+  },
+  {
+    id: 3,
+    name: "中央回路",
+    sector: "第 18 区",
+    description: "敌人反复穿越中央区域，部署位竞争激烈。",
+    difficulty: "进阶",
+    accent: "#a98bff",
+    path: pointList([[-40, 310], [160, 310], [160, 150], [400, 150], [400, 470], [640, 470], [640, 230], [800, 230], [800, 390], [1000, 390]]),
+    pads: padList([["A1", 80, 230], ["A2", 240, 230], ["B1", 320, 70], ["B2", 320, 310], ["B3", 480, 230], ["B4", 480, 390], ["C1", 560, 550], ["C2", 720, 550], ["C3", 560, 310], ["D1", 720, 150], ["D2", 880, 310], ["D3", 880, 470]]),
+    rules: makeRules({ finalWave: 8, initialGold: 230, enemyHealth: 1.05, enemySpeed: 1.03, enemyCount: 1.08 }),
+  },
+  {
+    id: 4,
+    name: "北岸折返",
+    sector: "第 23 区",
+    description: "长距离纵向推进，重装单位将更频繁出现。",
+    difficulty: "困难",
+    accent: "#ffb648",
+    path: pointList([[-40, 470], [160, 470], [160, 230], [400, 230], [400, 70], [640, 70], [640, 310], [880, 310], [880, 150], [1000, 150]]),
+    pads: padList([["A1", 80, 390], ["A2", 240, 390], ["B1", 80, 230], ["B2", 240, 150], ["B3", 320, 310], ["C1", 480, 150], ["C2", 560, 150], ["C3", 720, 150], ["D1", 560, 310], ["D2", 720, 390], ["D3", 800, 230], ["E1", 960, 230]]),
+    rules: makeRules({ finalWave: 9, initialGold: 215, lives: 10, enemyHealth: 1.12, enemySpeed: 1.06, enemyCount: 1.12, tankWave: 2, waveBonus: 0.94 }),
+  },
+  {
+    id: 5,
+    name: "矩阵峡谷",
+    sector: "第 31 区",
+    description: "长直线与急弯交替，疾行单位会成群来袭。",
+    difficulty: "专家",
+    accent: "#ff79c9",
+    path: pointList([[-40, 150], [240, 150], [240, 310], [480, 310], [480, 470], [720, 470], [720, 150], [1000, 150]]),
+    pads: padList([["A1", 80, 70], ["A2", 160, 230], ["B1", 320, 230], ["B2", 400, 390], ["C1", 560, 390], ["C2", 640, 550], ["C3", 800, 550], ["D1", 640, 310], ["D2", 800, 310], ["E1", 800, 70], ["E2", 880, 230]]),
+    rules: makeRules({ finalWave: 10, initialGold: 205, lives: 9, enemyHealth: 1.2, enemySpeed: 1.1, enemyCount: 1.16, spawnRate: 0.9, runnerWave: 1, tankWave: 2, waveBonus: 0.88 }),
+  },
+  {
+    id: 6,
+    name: "核心迷城",
+    sector: "第 42 区",
+    description: "最终防区。资源紧缺，混合敌群持续施压。",
+    difficulty: "噩梦",
+    accent: "#ff675e",
+    path: pointList([[-40, 310], [160, 310], [160, 70], [400, 70], [400, 230], [640, 230], [640, 470], [880, 470], [880, 310], [1000, 310]]),
+    pads: padList([["A1", 80, 230], ["A2", 240, 150], ["B1", 320, 150], ["B2", 480, 150], ["C1", 560, 310], ["C2", 720, 310], ["C3", 560, 390], ["D1", 720, 550], ["D2", 800, 390], ["E1", 960, 390]]),
+    rules: makeRules({ finalWave: 12, initialGold: 195, lives: 8, enemyHealth: 1.3, enemySpeed: 1.14, enemyCount: 1.22, spawnRate: 0.84, runnerWave: 1, tankWave: 2, waveBonus: 0.8 }),
+  },
 ];
 
-const BUILD_PADS: Array<{ id: string; point: Point }> = [
-  { id: "A1", point: { x: 80, y: 70 } },
-  { id: "A2", point: { x: 80, y: 230 } },
-  { id: "B1", point: { x: 240, y: 230 } },
-  { id: "B2", point: { x: 320, y: 230 } },
-  { id: "B3", point: { x: 320, y: 390 } },
-  { id: "C1", point: { x: 480, y: 70 } },
-  { id: "C2", point: { x: 480, y: 230 } },
-  { id: "C3", point: { x: 560, y: 230 } },
-  { id: "D1", point: { x: 720, y: 230 } },
-  { id: "D2", point: { x: 560, y: 390 } },
-  { id: "D3", point: { x: 720, y: 390 } },
-  { id: "D4", point: { x: 720, y: 550 } },
-  { id: "E1", point: { x: 880, y: 230 } },
-  { id: "E2", point: { x: 880, y: 390 } },
+const MODES: ModeConfig[] = [
+  {
+    id: "survival",
+    name: "无尽生存",
+    badge: "无尽",
+    description: "没有最终波次，敌人会持续变强。挑战你的最高分。",
+    levelId: 3,
+    accent: "#61f5a8",
+    rules: makeRules({ finalWave: null, initialGold: 245, enemyCount: 1.08, spawnRate: 0.9, waveBonus: 0.95 }),
+  },
+  {
+    id: "blitz",
+    name: "闪电战",
+    badge: "极速",
+    description: "六波高密度快攻。资源充足，但思考时间很少。",
+    levelId: 2,
+    accent: "#54f1ff",
+    rules: makeRules({ finalWave: 6, initialGold: 310, lives: 8, enemyHealth: 0.96, enemySpeed: 1.3, enemyCount: 1.2, spawnRate: 0.58, waveBonus: 0.9, runnerWave: 1, tankWave: 2 }),
+  },
+  {
+    id: "hardcore",
+    name: "硬核协议",
+    badge: "3 核心",
+    description: "只有三点核心耐久，敌人更强，补给更少。",
+    levelId: 6,
+    accent: "#ff5470",
+    rules: makeRules({ finalWave: 10, initialGold: 190, lives: 3, enemyHealth: 1.38, enemySpeed: 1.14, enemyCount: 1.25, spawnRate: 0.82, waveBonus: 0.68, runnerWave: 1, tankWave: 2 }),
+  },
 ];
 
 const TOWERS: Record<
@@ -172,13 +303,13 @@ const TOWERS: Record<
   },
 };
 
-const createGame = (): Game => ({
+const createGame = (rules: RuleSet): Game => ({
   enemies: [],
   towers: [],
   projectiles: [],
   particles: [],
-  gold: 230,
-  lives: 12,
+  gold: rules.initialGold,
+  lives: rules.lives,
   score: 0,
   wave: 0,
   active: false,
@@ -226,11 +357,20 @@ function roundedRect(
 
 export default function Home() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const gameRef = useRef<Game>(createGame());
+  const activeLevelRef = useRef<LevelConfig>(LEVELS[0]);
+  const activeRulesRef = useRef<RuleSet>(LEVELS[0].rules);
+  const gameRef = useRef<Game>(createGame(LEVELS[0].rules));
   const selectedKindRef = useRef<TowerKind | null>("pulse");
   const selectedTowerRef = useRef<number | null>(null);
   const hoverRef = useRef<Point | null>(null);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [screen, setScreen] = useState<Screen>("home");
+  const [activeMission, setActiveMission] = useState<ActiveMission>({
+    category: "战役模式",
+    title: LEVELS[0].name,
+    level: LEVELS[0],
+    rules: LEVELS[0].rules,
+  });
   const [selectedKind, setSelectedKind] = useState<TowerKind | null>("pulse");
   const [selectedTowerId, setSelectedTowerId] = useState<number | null>(null);
   const [toast, setToast] = useState("先部署防御塔，再启动敌袭");
@@ -238,6 +378,31 @@ export default function Home() {
 
   const syncUi = () =>
     setUi((previous) => toUi(gameRef.current, previous.version + 1));
+
+  const startMission = (
+    level: LevelConfig,
+    rules: RuleSet,
+    category: string,
+    title: string,
+  ) => {
+    activeLevelRef.current = level;
+    activeRulesRef.current = rules;
+    gameRef.current = createGame(rules);
+    hoverRef.current = null;
+    selectedKindRef.current = "pulse";
+    selectedTowerRef.current = null;
+    setSelectedKind("pulse");
+    setSelectedTowerId(null);
+    setActiveMission({ category, title, level, rules });
+    setUi(toUi(gameRef.current));
+    setToast("先部署防御塔，再启动敌袭");
+    setScreen("game");
+  };
+
+  const returnToLobby = () => {
+    gameRef.current.paused = true;
+    setScreen("home");
+  };
 
   const showToast = (message: string) => {
     setToast(message);
@@ -303,11 +468,17 @@ export default function Home() {
 
   const startWave = () => {
     const game = gameRef.current;
-    if (game.active || game.won || game.lost || game.wave >= FINAL_WAVE) return;
+    const rules = activeRulesRef.current;
+    if (
+      game.active ||
+      game.won ||
+      game.lost ||
+      (rules.finalWave !== null && game.wave >= rules.finalWave)
+    ) return;
     game.wave += 1;
     game.active = true;
     game.paused = false;
-    game.spawnTotal = 8 + game.wave * 2;
+    game.spawnTotal = Math.round((8 + game.wave * 2) * rules.enemyCount);
     game.spawnRemaining = game.spawnTotal;
     game.spawnSerial = 0;
     game.spawnTimer = 0.15;
@@ -328,7 +499,7 @@ export default function Home() {
   };
 
   const resetGame = () => {
-    gameRef.current = createGame();
+    gameRef.current = createGame(activeRulesRef.current);
     hoverRef.current = null;
     chooseTower("pulse");
     syncUi();
@@ -369,6 +540,7 @@ export default function Home() {
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
+      if (screen !== "game") return;
       if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement)
         return;
       if (event.key === "1") chooseTower("pulse");
@@ -382,7 +554,7 @@ export default function Home() {
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, []);
+  }, [screen]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -414,11 +586,13 @@ export default function Home() {
 
     const spawnEnemy = () => {
       const game = gameRef.current;
+      const rules = activeRulesRef.current;
+      const path = activeLevelRef.current.path;
       const serial = game.spawnSerial++;
       let kind: EnemyKind = "drone";
-      if (game.wave >= 2 && serial % 5 === 3) kind = "runner";
-      if (game.wave >= 3 && serial % 7 === 6) kind = "tank";
-      const scale = 1.08 + (game.wave - 1) * 0.3;
+      if (game.wave >= rules.runnerWave && serial % 5 === 3) kind = "runner";
+      if (game.wave >= rules.tankWave && serial % 7 === 6) kind = "tank";
+      const scale = (1.08 + (game.wave - 1) * 0.3) * rules.enemyHealth;
       const profile =
         kind === "runner"
           ? { hp: 38, speed: 92, reward: 10, radius: 12 }
@@ -428,12 +602,12 @@ export default function Home() {
       game.enemies.push({
         id: game.nextId++,
         kind,
-        x: PATH[0].x,
-        y: PATH[0].y,
+        x: path[0].x,
+        y: path[0].y,
         pathIndex: 1,
         hp: profile.hp * scale,
         maxHp: profile.hp * scale,
-        speed: profile.speed * (1.04 + game.wave * 0.015),
+        speed: profile.speed * (1.04 + game.wave * 0.015) * rules.enemySpeed,
         reward: profile.reward + Math.floor(game.wave / 3),
         radius: profile.radius,
         slowUntil: 0,
@@ -444,6 +618,8 @@ export default function Home() {
 
     const update = (dt: number) => {
       const game = gameRef.current;
+      const rules = activeRulesRef.current;
+      const path = activeLevelRef.current.path;
       if (game.paused || game.won || game.lost) return;
       game.elapsed += dt;
 
@@ -452,7 +628,7 @@ export default function Home() {
         if (game.spawnTimer <= 0) {
           spawnEnemy();
           game.spawnRemaining -= 1;
-          game.spawnTimer = Math.max(0.34, 0.78 - game.wave * 0.035);
+          game.spawnTimer = Math.max(0.2, (0.78 - game.wave * 0.035) * rules.spawnRate);
         }
       }
 
@@ -461,7 +637,7 @@ export default function Home() {
         let movement =
           enemy.speed * dt * (enemy.slowUntil > game.elapsed ? enemy.slowFactor : 1);
         while (movement > 0 && !enemy.dead) {
-          const target = PATH[enemy.pathIndex];
+          const target = path[enemy.pathIndex];
           if (!target) {
             enemy.dead = true;
             game.lives -= enemy.kind === "tank" ? 2 : 1;
@@ -563,9 +739,9 @@ export default function Home() {
         !game.lost
       ) {
         game.active = false;
-        const bonus = 20 + game.wave * 5;
+        const bonus = Math.round((20 + game.wave * 5) * rules.waveBonus);
         game.gold += bonus;
-        if (game.wave >= FINAL_WAVE) {
+        if (rules.finalWave !== null && game.wave >= rules.finalWave) {
           game.won = true;
           game.score += game.lives * 400;
           showToast("全部敌袭已清除，黎明属于我们");
@@ -576,13 +752,14 @@ export default function Home() {
     };
 
     const drawPath = (game: Game) => {
+      const path = activeLevelRef.current.path;
       ctx.save();
       ctx.lineCap = "round";
       ctx.lineJoin = "round";
       const trace = () => {
         ctx.beginPath();
-        ctx.moveTo(PATH[0].x, PATH[0].y);
-        PATH.slice(1).forEach((point) => ctx.lineTo(point.x, point.y));
+        ctx.moveTo(path[0].x, path[0].y);
+        path.slice(1).forEach((point) => ctx.lineTo(point.x, point.y));
       };
       trace();
       ctx.strokeStyle = "rgba(57, 231, 255, .18)";
@@ -709,6 +886,9 @@ export default function Home() {
 
     const draw = () => {
       const game = gameRef.current;
+      const path = activeLevelRef.current.path;
+      const entranceY = path[0].y;
+      const coreY = path[path.length - 1].y;
       const gradient = ctx.createLinearGradient(0, 0, WIDTH, HEIGHT);
       gradient.addColorStop(0, "#080d1e");
       gradient.addColorStop(0.55, "#0c1428");
@@ -740,11 +920,11 @@ export default function Home() {
       ctx.textBaseline = "middle";
       ctx.font = '800 18px "Microsoft YaHei UI", "PingFang SC", sans-serif';
       ctx.fillStyle = "#54f1ff";
-      ctx.fillText("入口", 30, 108);
+      ctx.fillText("入口", 30, entranceY - 42);
       ctx.fillStyle = "#ff5470";
-      ctx.fillText("核心", 925, 268);
+      ctx.fillText("核心", 925, coreY - 42);
       ctx.beginPath();
-      ctx.arc(925, 310, 23 + Math.sin(game.elapsed * 3) * 3, 0, Math.PI * 2);
+      ctx.arc(925, coreY, 23 + Math.sin(game.elapsed * 3) * 3, 0, Math.PI * 2);
       ctx.strokeStyle = "rgba(255, 84, 112, .7)";
       ctx.lineWidth = 3;
       ctx.stroke();
@@ -839,7 +1019,7 @@ export default function Home() {
     };
     frame = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(frame);
-  }, []);
+  }, [screen]);
 
   useEffect(
     () => () => {
@@ -848,11 +1028,125 @@ export default function Home() {
     [],
   );
 
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }, [screen]);
+
   const remaining = ui.enemies + ui.spawnRemaining;
   const selectedSpec = selectedTower ? TOWERS[selectedTower.kind] : null;
   const upgradeCost = selectedTower
     ? Math.round(selectedSpec!.cost * (0.45 + selectedTower.level * 0.34))
     : 0;
+
+  const finalWave = activeRulesRef.current.finalWave;
+
+  if (screen !== "game") {
+    return (
+      <main className="menuShell">
+        <header className="menuTopbar">
+          <button className="menuLogo" onClick={() => setScreen("home")} aria-label="返回游戏大厅">
+            <span className="brandMark" aria-hidden="true"><span /></span>
+            <span><small>NEON GRID</small><b>霓虹防线</b></span>
+          </button>
+          <nav aria-label="主菜单">
+            <button className={screen === "home" ? "active" : ""} onClick={() => setScreen("home")}>大厅</button>
+            <button className={screen === "campaign" ? "active" : ""} onClick={() => setScreen("campaign")}>战役</button>
+            <button className={screen === "modes" ? "active" : ""} onClick={() => setScreen("modes")}>特殊模式</button>
+          </nav>
+          <span className="onlineStatus"><i /> 防线在线</span>
+        </header>
+
+        {screen === "home" && (
+          <>
+            <section className="menuHero">
+              <div className="heroCopy">
+                <p className="heroKicker"><span>新任务已解锁</span> / 指挥官终端</p>
+                <h1>选择你的防线，<br /><em>守住最后的核心。</em></h1>
+                <p className="heroLead">六个战区、三种特殊协议。观察敌军路线，在有限部署点建立你的霓虹防线。</p>
+                <div className="menuActions">
+                  <button className="primaryMenuButton" onClick={() => setScreen("campaign")}>
+                    <span>开始战役</span><b>选择战区 →</b>
+                  </button>
+                  <button className="secondaryMenuButton" onClick={() => setScreen("modes")}>
+                    特殊模式
+                  </button>
+                </div>
+              </div>
+              <div className="heroRadar" aria-hidden="true">
+                <div className="radarRing ringOne" />
+                <div className="radarRing ringTwo" />
+                <div className="radarCore"><span>07</span><small>防区</small></div>
+                <i className="radarPing pingOne" /><i className="radarPing pingTwo" /><i className="radarPing pingThree" />
+              </div>
+            </section>
+            <section className="menuSummary" aria-label="游戏内容概览">
+              <article><strong>06</strong><span><b>战役关卡</b><small>从数据港到核心迷城</small></span></article>
+              <article><strong>03</strong><span><b>特殊模式</b><small>生存、闪电与硬核挑战</small></span></article>
+              <article><strong>03</strong><span><b>防御单位</b><small>自由组合与三级强化</small></span></article>
+            </section>
+          </>
+        )}
+
+        {screen === "campaign" && (
+          <section className="selectionPage">
+            <div className="selectionHeader">
+              <div><p>CAMPAIGN / 战役模式</p><h1>选择战区</h1></div>
+              <span>关卡越靠后，资源更少、敌人更强。</span>
+            </div>
+            <div className="levelGrid">
+              {LEVELS.map((level) => (
+                <button
+                  key={level.id}
+                  className="levelCard"
+                  style={{ "--card-accent": level.accent } as React.CSSProperties}
+                  onClick={() => startMission(level, level.rules, "战役模式", level.name)}
+                >
+                  <span className="levelTop"><i>{level.id.toString().padStart(2, "0")}</i><b>{level.difficulty}</b></span>
+                  <span className="levelRoute" aria-hidden="true"><i /><i /><i /><i /><i /></span>
+                  <span className="levelCopy"><small>{level.sector}</small><strong>{level.name}</strong><em>{level.description}</em></span>
+                  <span className="levelMeta"><i>{level.pads.length} 个部署点</i><b>{level.rules.finalWave} 波 →</b></span>
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {screen === "modes" && (
+          <section className="selectionPage modeSelection">
+            <div className="selectionHeader">
+              <div><p>SPECIAL PROTOCOLS / 特殊模式</p><h1>选择协议</h1></div>
+              <span>打破标准战役规则，用不同策略刷新战绩。</span>
+            </div>
+            <div className="modeGrid">
+              {MODES.map((mode, index) => {
+                const level = LEVELS.find((item) => item.id === mode.levelId)!;
+                return (
+                  <button
+                    key={mode.id}
+                    className="modeCard"
+                    style={{ "--card-accent": mode.accent } as React.CSSProperties}
+                    onClick={() => startMission(level, mode.rules, "特殊模式", mode.name)}
+                  >
+                    <span className="modeNumber">0{index + 1}</span>
+                    <span className="modeBadge">{mode.badge}</span>
+                    <strong>{mode.name}</strong>
+                    <p>{mode.description}</p>
+                    <span className="modeDetails">
+                      <i>地图：{level.name}</i>
+                      <i>{mode.rules.finalWave === null ? "无限波次" : `${mode.rules.finalWave} 波挑战`}</i>
+                    </span>
+                    <b className="modeLaunch">启动协议 →</b>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
+        <footer className="menuFooter"><span>NEON GRID DEFENSE // BUILD 02.6</span><span>本地战术模拟已就绪</span></footer>
+      </main>
+    );
+  }
 
   return (
     <main className="gameShell">
@@ -862,8 +1156,8 @@ export default function Home() {
             <span />
           </div>
           <div>
-            <p className="eyebrow">夜幕网格 / 第 07 区</p>
-            <h1>霓虹防线</h1>
+            <p className="eyebrow">{activeMission.category} / {activeMission.level.sector}</p>
+            <h1>{activeMission.title}</h1>
           </div>
         </div>
 
@@ -877,7 +1171,7 @@ export default function Home() {
             <span><small>能量币</small><strong>{ui.gold}</strong></span>
           </div>
           <div className="stat waveStat">
-            <span><small>波次</small><strong>{ui.wave} / {FINAL_WAVE}</strong></span>
+            <span><small>波次</small><strong>{ui.wave} / {finalWave ?? "∞"}</strong></span>
           </div>
           <div className="score">
             <small>战绩</small>
@@ -887,6 +1181,7 @@ export default function Home() {
       </header>
 
       <section className="commandBar" aria-label="游戏控制">
+        <button className="backLobbyButton" onClick={returnToLobby}>← 返回大厅</button>
         <div className="threatLine">
           <span className={`signal ${ui.active && !ui.paused ? "live" : ""}`} />
           <div>
@@ -921,8 +1216,8 @@ export default function Home() {
             onClick={startWave}
             disabled={ui.active || ui.won || ui.lost}
           >
-            <span>{ui.wave === 0 ? "启动敌袭" : ui.wave >= FINAL_WAVE ? "任务完成" : "下一波"}</span>
-            <b>{ui.wave < FINAL_WAVE ? `第 ${ui.wave + 1} 波` : "已清除"}</b>
+            <span>{ui.wave === 0 ? "启动敌袭" : finalWave !== null && ui.wave >= finalWave ? "任务完成" : "下一波"}</span>
+            <b>{finalWave === null || ui.wave < finalWave ? `第 ${ui.wave + 1} 波` : "已清除"}</b>
           </button>
         </div>
       </section>
@@ -932,7 +1227,7 @@ export default function Home() {
           <div className="arenaHeader">
             <div>
               <span>区域地图</span>
-              <b>河岸数据港</b>
+              <b>{activeMission.level.name}</b>
             </div>
             <p>选择塔后点击道路两侧的部署点 · 点击塔查看详情</p>
           </div>
@@ -952,7 +1247,7 @@ export default function Home() {
                 hoverRef.current = null;
               }}
             >
-              {BUILD_PADS.map(({ id, point }) => {
+              {activeMission.level.pads.map(({ id, point }) => {
                 const tower = gameRef.current.towers.find(
                   (item) => distance(point, item) < 1,
                 );
@@ -1002,7 +1297,7 @@ export default function Home() {
                 <h2>{ui.won ? "黎明已至" : "防线失守"}</h2>
                 <span>
                   {ui.won
-                    ? `最终得分 ${ui.score.toLocaleString()} · 核心完整度 ${ui.lives}/12`
+                    ? `最终得分 ${ui.score.toLocaleString()} · 核心完整度 ${ui.lives}/${activeMission.rules.lives}`
                     : `坚持到第 ${ui.wave} 波 · 最终得分 ${ui.score.toLocaleString()}`}
                 </span>
                 <button onClick={resetGame}>重新部署</button>
@@ -1099,7 +1394,7 @@ export default function Home() {
 
       <footer className="siteFooter">
         <span>夜幕网格防御协议</span>
-        <p>守住核心，撑过 {FINAL_WAVE} 波敌袭。</p>
+        <p>{finalWave === null ? "守住核心，挑战尽可能多的敌袭。" : `守住核心，撑过 ${finalWave} 波敌袭。`}</p>
         <button onClick={resetGame}>重置战局 ↻</button>
       </footer>
     </main>
