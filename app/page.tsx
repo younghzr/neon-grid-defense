@@ -210,21 +210,21 @@ function pointToSegment(point: Point, a: Point, b: Point) {
   return distance(point, { x: a.x + t * dx, y: a.y + t * dy });
 }
 
-function snapToGrid(point: Point): Point | null {
-  const column = Math.floor(point.x / GRID_SIZE);
-  const row = Math.floor((point.y - GRID_TOP) / GRID_SIZE);
-  if (column < 0 || column >= GRID_COLUMNS || row < 0 || row >= GRID_ROWS) return null;
-  return {
-    x: column * GRID_SIZE + GRID_SIZE / 2,
-    y: GRID_TOP + row * GRID_SIZE + GRID_SIZE / 2,
-  };
-}
-
 function isBuildableTerrain(point: Point) {
   return !PATH.slice(0, -1).some((start, index) =>
     pointToSegment(point, start, PATH[index + 1]) < 61,
   );
 }
+
+const GRID_CELLS = Array.from({ length: GRID_COLUMNS * GRID_ROWS }, (_, index) => {
+  const column = index % GRID_COLUMNS;
+  const row = Math.floor(index / GRID_COLUMNS);
+  const point = {
+    x: column * GRID_SIZE + GRID_SIZE / 2,
+    y: GRID_TOP + row * GRID_SIZE + GRID_SIZE / 2,
+  };
+  return { column, row, point, buildable: isBuildableTerrain(point) };
+});
 
 function roundedRect(
   ctx: CanvasRenderingContext2D,
@@ -278,19 +278,10 @@ export default function Home() {
     return !gameRef.current.towers.some((tower) => distance(point, tower) < GRID_SIZE * 0.8);
   };
 
-  const canvasPoint = (event: React.PointerEvent<HTMLCanvasElement>) => {
-    const rect = event.currentTarget.getBoundingClientRect();
-    return {
-      x: ((event.clientX - rect.left) / rect.width) * WIDTH,
-      y: ((event.clientY - rect.top) / rect.height) * HEIGHT,
-    };
-  };
-
-  const handleCanvasClick = (event: React.PointerEvent<HTMLCanvasElement>) => {
-    const rawPoint = canvasPoint(event);
-    const existing = [...gameRef.current.towers]
-      .reverse()
-      .find((tower) => distance(rawPoint, tower) < 29);
+  const handleGridCell = (point: Point) => {
+    const existing = gameRef.current.towers.find(
+      (tower) => distance(point, tower) < GRID_SIZE * 0.25,
+    );
     if (existing) {
       chooseBuiltTower(existing.id);
       return;
@@ -302,8 +293,7 @@ export default function Home() {
       return;
     }
     const spec = TOWERS[kind];
-    const point = snapToGrid(rawPoint);
-    if (!point || !canPlace(point)) {
+    if (!canPlace(point)) {
       showToast("此格不可部署，请选择发光空格");
       return;
     }
@@ -762,43 +752,6 @@ export default function Home() {
       drawPath(game);
 
       ctx.save();
-      for (let row = 0; row < GRID_ROWS; row += 1) {
-        for (let column = 0; column < GRID_COLUMNS; column += 1) {
-          const point = {
-            x: column * GRID_SIZE + GRID_SIZE / 2,
-            y: GRID_TOP + row * GRID_SIZE + GRID_SIZE / 2,
-          };
-          if (!isBuildableTerrain(point)) continue;
-          const occupied = game.towers.some(
-            (tower) => distance(point, tower) < GRID_SIZE * 0.8,
-          );
-          const inset = 4;
-          roundedRect(
-            ctx,
-            column * GRID_SIZE + inset,
-            GRID_TOP + row * GRID_SIZE + inset,
-            GRID_SIZE - inset * 2,
-            GRID_SIZE - inset * 2,
-            4,
-          );
-          ctx.fillStyle = occupied
-            ? "rgba(84, 241, 255, .045)"
-            : "rgba(84, 241, 255, .018)";
-          ctx.fill();
-          ctx.strokeStyle = occupied
-            ? "rgba(84, 241, 255, .18)"
-            : "rgba(111, 170, 205, .14)";
-          ctx.lineWidth = 1;
-          ctx.stroke();
-          if (!occupied) {
-            ctx.fillStyle = "rgba(84, 241, 255, .2)";
-            ctx.fillRect(point.x - 1, point.y - 1, 2, 2);
-          }
-        }
-      }
-      ctx.restore();
-
-      ctx.save();
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.font = "800 11px ui-monospace, monospace";
@@ -815,15 +768,14 @@ export default function Home() {
 
       const hover = hoverRef.current;
       const kind = selectedKindRef.current;
-      const snappedHover = hover ? snapToGrid(hover) : null;
-      if (snappedHover && kind && !game.won && !game.lost) {
+      if (hover && kind && !game.won && !game.lost) {
         const spec = TOWERS[kind];
-        const valid = canPlace(snappedHover) && game.gold >= spec.cost;
+        const valid = canPlace(hover) && game.gold >= spec.cost;
         ctx.save();
         roundedRect(
           ctx,
-          snappedHover.x - GRID_SIZE / 2 + 3,
-          snappedHover.y - GRID_SIZE / 2 + 3,
+          hover.x - GRID_SIZE / 2 + 3,
+          hover.y - GRID_SIZE / 2 + 3,
           GRID_SIZE - 6,
           GRID_SIZE - 6,
           5,
@@ -835,7 +787,7 @@ export default function Home() {
         ctx.stroke();
         ctx.globalAlpha = 0.68;
         ctx.beginPath();
-        ctx.arc(snappedHover.x, snappedHover.y, spec.range, 0, Math.PI * 2);
+        ctx.arc(hover.x, hover.y, spec.range, 0, Math.PI * 2);
         ctx.fillStyle = valid ? `${spec.color}0d` : "rgba(255, 84, 112, .08)";
         ctx.fill();
         ctx.setLineDash([6, 7]);
@@ -843,7 +795,7 @@ export default function Home() {
         ctx.stroke();
         ctx.setLineDash([]);
         ctx.beginPath();
-        ctx.arc(snappedHover.x, snappedHover.y, 21, 0, Math.PI * 2);
+        ctx.arc(hover.x, hover.y, 21, 0, Math.PI * 2);
         ctx.fillStyle = valid ? "#13273b" : "#321422";
         ctx.fill();
         ctx.lineWidth = 2;
@@ -1005,15 +957,52 @@ export default function Home() {
               ref={canvasRef}
               width={WIDTH}
               height={HEIGHT}
-              onPointerMove={(event) => {
-                hoverRef.current = canvasPoint(event);
-              }}
+              aria-hidden="true"
+            />
+            <div
+              className="placementGrid"
+              data-testid="placement-grid"
+              role="group"
+              aria-label="炮塔部署格。选择防御塔后点击可部署方格。"
               onPointerLeave={() => {
                 hoverRef.current = null;
               }}
-              onPointerDown={handleCanvasClick}
-              aria-label="塔防游戏地图。选择防御塔后点击发光方格部署。"
-            />
+            >
+              {GRID_CELLS.map(({ column, row, point, buildable }) => {
+                const tower = gameRef.current.towers.find(
+                  (item) => distance(point, item) < GRID_SIZE * 0.25,
+                );
+                const affordable = selectedKind ? ui.gold >= TOWERS[selectedKind].cost : true;
+                return (
+                  <button
+                    type="button"
+                    key={`${column}-${row}`}
+                    data-cell={`${column}-${row}`}
+                    className={`gridCell ${buildable ? "buildable" : "blocked"} ${tower ? "occupied" : ""} ${!affordable ? "unaffordable" : ""}`}
+                    disabled={!buildable || ui.won || ui.lost}
+                    onPointerEnter={() => {
+                      hoverRef.current = point;
+                    }}
+                    onFocus={() => {
+                      hoverRef.current = point;
+                    }}
+                    onBlur={() => {
+                      hoverRef.current = null;
+                    }}
+                    onClick={() => handleGridCell(point)}
+                    aria-label={
+                      !buildable
+                        ? `第 ${row + 1} 行第 ${column + 1} 列，航道格`
+                        : tower
+                          ? `第 ${row + 1} 行第 ${column + 1} 列，已部署${TOWERS[tower.kind].name}`
+                          : `第 ${row + 1} 行第 ${column + 1} 列，可部署`
+                    }
+                  >
+                    {tower ? <span aria-hidden="true">{tower.level}</span> : null}
+                  </button>
+                );
+              })}
+            </div>
             {toast && <div className="toast" role="status">{toast}</div>}
             {ui.wave === 0 && gameRef.current.towers.length === 0 && (
               <div className="firstHint" aria-hidden="true">
