@@ -2034,6 +2034,410 @@ canvas:focus-visible {
   box-shadow: 0 0 8px rgba(139, 202, 174, 0.42);
 }
 
+/* BUILD 04.0 gameplay systems */
+.threatCopy {
+  min-width: 175px;
+}
+
+.threatProgress {
+  display: block;
+  overflow: hidden;
+  width: 100%;
+  height: 3px;
+  margin-top: 7px;
+  border-radius: 99px;
+  background: rgba(143, 221, 227, 0.1);
+}
+
+.threatProgress i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #8fdde3, #b4a4dd);
+  box-shadow: 0 0 10px rgba(143, 221, 227, 0.35);
+  transition: width 180ms linear;
+}
+
+.empButton {
+  display: flex;
+  width: 98px;
+  height: 48px;
+  padding: 0 10px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  color: #8f9caf;
+}
+
+.empButton span {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+}
+
+.empButton kbd {
+  margin-right: 3px;
+  color: #7c899f;
+  font: 800 10px/1 ui-monospace, monospace;
+}
+
+.empButton b {
+  color: #8592a8;
+  font: 800 10px/1 ui-monospace, monospace;
+}
+
+.empButton.ready:not(:disabled) {
+  border-color: rgba(143, 221, 227, 0.5);
+  background: linear-gradient(135deg, rgba(75, 135, 150, 0.36), rgba(70, 68, 116, 0.4));
+  color: #e7fbfa;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 0 18px rgba(143, 221, 227, 0.08);
+}
+
+.empButton.ready:not(:disabled) b,
+.empButton.ready:not(:disabled) kbd {
+  color: var(--cyan);
+}
+
+.levelStars {
+  display: flex;
+  margin-left: auto;
+  margin-right: 9px;
+  gap: 4px;
+}
+
+.levelStars em {
+  color: rgba(228, 189, 132, 0.19);
+  font-size: 11px;
+  font-style: normal;
+}
+
+.levelStars em.earned {
+  color: #e4bd84;
+  text-shadow: 0 0 8px rgba(228, 189, 132, 0.36);
+}
+
+.resultOverlay {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.resultStars {
+  display: flex;
+  margin: -2px 0 10px;
+  gap: 8px;
+}
+
+.resultStars i {
+  color: rgba(228, 189, 132, 0.22);
+  font-size: 20px;
+  font-style: normal;
+}
+
+.resultStars i.earned {
+  color: #e4bd84;
+  text-shadow: 0 0 12px rgba(228, 189, 132, 0.48);
+}
+
+.battleReport {
+  display: grid;
+  width: min(460px, 92%);
+  margin-top: 16px;
+  grid-template-columns: repeat(4, 1fr);
+  border: 1px solid rgba(192, 207, 229, 0.14);
+  border-radius: 13px;
+  background: rgba(28, 38, 61, 0.6);
+}
+
+.battleReport > span {
+  padding: 9px 8px;
+  color: #e5ebf5;
+}
+
+.battleReport > span + span {
+  border-left: 1px solid rgba(192, 207, 229, 0.12);
+}
+
+.battleReport small,
+.battleReport b {
+  display: block;
+}
+
+.battleReport small {
+  margin-bottom: 4px;
+  color: #7f8da3;
+  font-size: 10px;
+}
+
+.battleReport b {
+  color: #eef4f8;
+  font: 800 13px/1 ui-monospace, monospace;
+}
+
+.arenaEnemySummary {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 6px;
+}
+
+.enemyTag {
+  display: inline-flex;
+  min-height: 25px;
+  padding: 0 8px;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid rgba(192, 207, 229, 0.13);
+  border-radius: 999px;
+  background: rgba(35, 46, 70, 0.6);
+  color: #b9c4d4;
+  font: 700 11px/1 "Microsoft YaHei UI", "PingFang SC", sans-serif;
+  white-space: nowrap;
+}
+
+.enemyTag i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #dce7f3;
+  box-shadow: 0 0 6px currentColor;
+}
+
+.enemyTag.runner i { background: #dda0c2; }
+.enemyTag.tank i { background: #df918e; }
+.enemyTag.shield i { background: #91c9e6; }
+.enemyTag.support i { background: #8bcaae; }
+.enemyTag.boss {
+  border-color: rgba(228, 189, 132, 0.35);
+  color: #e8cfaa;
+}
+.enemyTag.boss i { background: #e4bd84; }
+
+.sidebar {
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(143, 221, 227, 0.22) transparent;
+}
+
+.towerInspector {
+  flex: 0 0 auto;
+}
+
+.priorityControl {
+  display: flex;
+  margin: 10px 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.priorityControl > span,
+.specializationLabel span,
+.specializationSummary > span {
+  color: #8290a5;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.priorityControl > div {
+  display: grid;
+  flex: 1;
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.priorityControl button {
+  min-height: 28px;
+  padding: 0 6px;
+  border: 1px solid rgba(192, 207, 229, 0.13);
+  background: rgba(27, 37, 59, 0.64);
+  color: #8794a8;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.priorityControl button:first-child { border-radius: 8px 0 0 8px; }
+.priorityControl button:last-child { border-radius: 0 8px 8px 0; }
+.priorityControl button + button { border-left: 0; }
+
+.priorityControl button.active {
+  border-color: rgba(143, 221, 227, 0.42);
+  background: rgba(91, 151, 163, 0.24);
+  color: #dff7f7;
+}
+
+.specializationPicker {
+  margin-top: 10px;
+}
+
+.specializationLabel {
+  display: flex;
+  margin-bottom: 7px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.specializationLabel b {
+  color: #e4bd84;
+  font: 750 11px/1 ui-monospace, monospace;
+}
+
+.specializationPicker > div:last-child {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.specializationPicker button {
+  min-height: 66px;
+  padding: 8px;
+  border: 1px solid rgba(180, 164, 221, 0.2);
+  border-radius: 10px;
+  background: linear-gradient(145deg, rgba(57, 54, 91, 0.44), rgba(31, 42, 65, 0.66));
+  color: #dcd5ed;
+  cursor: pointer;
+  text-align: left;
+}
+
+.specializationPicker button:hover {
+  border-color: rgba(180, 164, 221, 0.5);
+  background: rgba(69, 63, 106, 0.52);
+}
+
+.specializationPicker button b,
+.specializationPicker button small {
+  display: block;
+}
+
+.specializationPicker button b {
+  margin-bottom: 5px;
+  font-size: 12px;
+}
+
+.specializationPicker button small {
+  color: #8995a9;
+  font-size: 10px;
+  line-height: 1.35;
+}
+
+.specializationSummary {
+  display: grid;
+  margin: 9px 0;
+  padding: 8px 10px;
+  grid-template-columns: auto 1fr;
+  gap: 3px 9px;
+  border: 1px solid rgba(180, 164, 221, 0.2);
+  border-radius: 10px;
+  background: rgba(72, 62, 103, 0.2);
+}
+
+.specializationSummary b {
+  color: #d8cfee;
+  font-size: 12px;
+  text-align: right;
+}
+
+.specializationSummary small {
+  grid-column: 1 / -1;
+  color: #8f9caf;
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.sellButton.wide {
+  width: 100%;
+  min-height: 32px;
+  margin-top: 7px;
+  border: 1px solid rgba(192, 207, 229, 0.13);
+  border-radius: 9px;
+  background: rgba(29, 39, 62, 0.58);
+  color: #8e9bb1;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.waveIntel {
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid rgba(192, 207, 229, 0.13);
+  border-radius: 14px;
+  background: rgba(22, 31, 52, 0.54);
+}
+
+.waveIntelTitle,
+.waveIntelReward {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.waveIntelTitle span {
+  color: var(--cyan);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.waveIntelTitle b {
+  color: #edf3f6;
+  font-size: 13px;
+}
+
+.waveIntelCounts {
+  display: flex;
+  margin: 9px 0;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.waveIntelReward {
+  padding-top: 8px;
+  border-top: 1px solid rgba(192, 207, 229, 0.1);
+  color: #8290a5;
+  font-size: 11px;
+}
+
+.waveIntelReward b { color: #e4bd84; }
+
+.waveIntel > p {
+  margin: 8px 0 0;
+  color: #9aa7ba;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.enemyGuide {
+  margin-top: 8px;
+  border-top: 1px solid rgba(192, 207, 229, 0.1);
+}
+
+.enemyGuide summary {
+  padding-top: 8px;
+  color: #8f9caf;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.enemyGuide > div {
+  display: grid;
+  margin-top: 8px;
+  gap: 5px;
+}
+
+.enemyGuide p {
+  display: grid;
+  margin: 0;
+  grid-template-columns: 55px 1fr;
+  gap: 7px;
+  color: #8390a4;
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.enemyGuide p b { color: #cbd5e1; }
+
 @media (max-width: 1080px) {
   .menuShell {
     width: min(100% - 32px, 940px);
@@ -2052,6 +2456,19 @@ canvas:focus-visible {
 
   .gameShell {
     width: min(100% - 28px, 980px);
+  }
+
+  .commandBar {
+    flex-wrap: wrap;
+    gap: 10px 16px;
+  }
+
+  .threatLine {
+    min-width: 220px;
+  }
+
+  .controls {
+    margin-left: auto;
   }
 
   .gameLayout {
@@ -2078,7 +2495,8 @@ canvas:focus-visible {
     margin-top: 0;
   }
 
-  .missionNote {
+  .missionNote,
+  .waveIntel {
     margin-top: 0;
   }
 }
@@ -2243,6 +2661,7 @@ canvas:focus-visible {
   .iconButton,
   .speedButton,
   .autoWaveButton,
+  .empButton,
   .waveButton {
     width: auto;
     height: 44px;
@@ -2264,6 +2683,7 @@ canvas:focus-visible {
   }
 
   .waveButton {
+    grid-column: 1 / -1;
     min-width: 0;
     padding: 0 9px;
     justify-content: center;
@@ -2281,6 +2701,11 @@ canvas:focus-visible {
 
   .arenaFooter {
     gap: 11px;
+    overflow-x: auto;
+  }
+
+  .arenaEnemySummary {
+    min-width: max-content;
   }
 
   .sidebar {
@@ -2319,6 +2744,48 @@ canvas:focus-visible {
 
   .missionNote {
     margin-top: 12px;
+  }
+
+  .waveIntel {
+    margin-top: 10px;
+  }
+
+  .resultOverlay {
+    padding: 12px;
+  }
+
+  .resultOverlay p {
+    margin-bottom: 5px;
+  }
+
+  .resultOverlay h2 {
+    margin-bottom: 5px;
+    font-size: 27px;
+  }
+
+  .resultOverlay > span {
+    font-size: 12px;
+  }
+
+  .resultStars {
+    margin-bottom: 5px;
+  }
+
+  .resultStars i {
+    font-size: 14px;
+  }
+
+  .battleReport {
+    margin-top: 9px;
+  }
+
+  .battleReport > span {
+    padding: 6px 4px;
+  }
+
+  .resultOverlay button {
+    margin-top: 10px;
+    padding: 8px 16px;
   }
 
   .siteFooter > span {

@@ -7,10 +7,19 @@ const HEIGHT = 620;
 const PAD_SIZE = 46;
 const GUEST_SAVE_KEY = "neon-grid-defense:guest-save:v1";
 const AUTO_WAVE_DELAY = 3;
+const EMP_COOLDOWN = 36;
 
 type Point = { x: number; y: number };
 type TowerKind = "pulse" | "frost" | "rail";
-type EnemyKind = "drone" | "runner" | "tank";
+type EnemyKind = "drone" | "runner" | "tank" | "shield" | "support" | "boss";
+type TargetPriority = "first" | "strong" | "fast";
+type TowerSpecialization =
+  | "pulse_chain"
+  | "pulse_overdrive"
+  | "frost_zero"
+  | "frost_brittle"
+  | "rail_pierce"
+  | "rail_mark";
 type Screen = "home" | "campaign" | "modes" | "game";
 
 type RuleSet = {
@@ -58,6 +67,7 @@ type ActiveMission = {
 type GuestRecord = {
   bestScore: number;
   bestWave: number;
+  bestStars: number;
   wins: number;
   plays: number;
 };
@@ -89,6 +99,15 @@ type Enemy = Point & {
   radius: number;
   slowUntil: number;
   slowFactor: number;
+  shield: number;
+  maxShield: number;
+  armor: number;
+  leakDamage: number;
+  slowResistance: number;
+  abilityTimer: number;
+  stunnedUntil: number;
+  brittleUntil: number;
+  markedUntil: number;
   dead: boolean;
 };
 
@@ -99,6 +118,8 @@ type Tower = Point & {
   cooldown: number;
   angle: number;
   spent: number;
+  priority: TargetPriority;
+  specialization: TowerSpecialization | null;
 };
 
 type Projectile = Point & {
@@ -109,6 +130,8 @@ type Projectile = Point & {
   color: string;
   slow: number;
   size: number;
+  sourceTowerId: number;
+  specialization: TowerSpecialization | null;
 };
 
 type Particle = Point & {
@@ -118,6 +141,19 @@ type Particle = Point & {
   maxLife: number;
   size: number;
   color: string;
+};
+
+type BattleStats = {
+  kills: number;
+  damageDealt: number;
+  goldEarned: number;
+  goldSpent: number;
+  leaks: number;
+  towersBuilt: number;
+  towersSold: number;
+  skillsUsed: number;
+  bossesKilled: number;
+  wavesCleared: number;
 };
 
 type Game = {
@@ -133,6 +169,8 @@ type Game = {
   paused: boolean;
   autoWave: boolean;
   autoWaveTimer: number;
+  empCooldown: number;
+  empPulseUntil: number;
   speed: 1 | 2;
   won: boolean;
   lost: boolean;
@@ -142,6 +180,7 @@ type Game = {
   spawnSerial: number;
   elapsed: number;
   nextId: number;
+  stats: BattleStats;
 };
 
 type UiState = Pick<
@@ -154,12 +193,24 @@ type UiState = Pick<
   | "paused"
   | "autoWave"
   | "autoWaveTimer"
+  | "empCooldown"
   | "speed"
   | "won"
   | "lost"
   | "spawnRemaining"
   | "spawnTotal"
+  | "stats"
 > & { enemies: number; version: number };
+
+type EnemyCounts = Record<EnemyKind, number>;
+
+type WavePlan = {
+  wave: number;
+  sequence: EnemyKind[];
+  counts: EnemyCounts;
+  clearBonus: number;
+  hasBoss: boolean;
+};
 
 const pointList = (items: Array<[number, number]>): Point[] =>
   items.map(([x, y]) => ({ x, y }));
@@ -329,6 +380,244 @@ const TOWERS: Record<
   },
 };
 
+const ENEMY_ORDER: EnemyKind[] = ["drone", "runner", "tank", "shield", "support", "boss"];
+
+const ENEMY_PROFILES: Record<
+  EnemyKind,
+  {
+    name: string;
+    shortName: string;
+    hp: number;
+    speed: number;
+    reward: number;
+    radius: number;
+    leakDamage: number;
+    armor: number;
+    shieldRatio: number;
+    slowResistance: number;
+    color: string;
+    description: string;
+  }
+> = {
+  drone: {
+    name: "巡航体",
+    shortName: "巡",
+    hp: 72,
+    speed: 53,
+    reward: 13,
+    radius: 15,
+    leakDamage: 1,
+    armor: 0,
+    shieldRatio: 0,
+    slowResistance: 0,
+    color: "#dce7f3",
+    description: "属性均衡的基础单位。",
+  },
+  runner: {
+    name: "疾行体",
+    shortName: "疾",
+    hp: 38,
+    speed: 92,
+    reward: 10,
+    radius: 12,
+    leakDamage: 1,
+    armor: 0,
+    shieldRatio: 0,
+    slowResistance: 0,
+    color: "#dda0c2",
+    description: "生命较低但速度很快，优先减速。",
+  },
+  tank: {
+    name: "重装体",
+    shortName: "重",
+    hp: 210,
+    speed: 35,
+    reward: 28,
+    radius: 20,
+    leakDamage: 2,
+    armor: 0.2,
+    shieldRatio: 0,
+    slowResistance: 0.12,
+    color: "#df918e",
+    description: "拥有 20% 装甲；轨道炮可无视装甲。",
+  },
+  shield: {
+    name: "护盾体",
+    shortName: "盾",
+    hp: 92,
+    speed: 46,
+    reward: 21,
+    radius: 16,
+    leakDamage: 1,
+    armor: 0,
+    shieldRatio: 0.72,
+    slowResistance: 0.08,
+    color: "#91c9e6",
+    description: "携带能量盾；脉冲塔对护盾额外增伤。",
+  },
+  support: {
+    name: "修复体",
+    shortName: "修",
+    hp: 84,
+    speed: 43,
+    reward: 24,
+    radius: 16,
+    leakDamage: 1,
+    armor: 0,
+    shieldRatio: 0,
+    slowResistance: 0,
+    color: "#8bcaae",
+    description: "周期修复附近受损单位，应尽快击破。",
+  },
+  boss: {
+    name: "主宰母舰",
+    shortName: "首",
+    hp: 0,
+    speed: 28,
+    reward: 0,
+    radius: 28,
+    leakDamage: 4,
+    armor: 0.12,
+    shieldRatio: 0.35,
+    slowResistance: 0.55,
+    color: "#e4bd84",
+    description: "首领单位。低生命时会进入狂暴状态。",
+  },
+};
+
+const DEFAULT_PRIORITY: Record<TowerKind, TargetPriority> = {
+  pulse: "first",
+  frost: "fast",
+  rail: "strong",
+};
+
+const PRIORITY_LABELS: Record<TargetPriority, string> = {
+  first: "前线",
+  strong: "最强",
+  fast: "最快",
+};
+
+const SPECIALIZATIONS: Record<
+  TowerKind,
+  Array<{ id: TowerSpecialization; name: string; description: string }>
+> = {
+  pulse: [
+    { id: "pulse_chain", name: "链式回路", description: "命中后弹射 1 个目标，造成 55% 伤害" },
+    { id: "pulse_overdrive", name: "高频核心", description: "射速提高 25%，射程缩短 10%" },
+  ],
+  frost: [
+    { id: "frost_zero", name: "绝对零域", description: "减速更强，持续时间延长至 2.1 秒" },
+    { id: "frost_brittle", name: "脆化协议", description: "减速目标受到其他塔额外伤害" },
+  ],
+  rail: [
+    { id: "rail_pierce", name: "贯穿弹芯", description: "继续打击附近第 2 个目标，造成 60% 伤害" },
+    { id: "rail_mark", name: "破甲标记", description: "标记 3 秒，使后续伤害提高" },
+  ],
+};
+
+const createEnemyCounts = (): EnemyCounts => ({
+  drone: 0,
+  runner: 0,
+  tank: 0,
+  shield: 0,
+  support: 0,
+  boss: 0,
+});
+
+const createBattleStats = (): BattleStats => ({
+  kills: 0,
+  damageDealt: 0,
+  goldEarned: 0,
+  goldSpent: 0,
+  leaks: 0,
+  towersBuilt: 0,
+  towersSold: 0,
+  skillsUsed: 0,
+  bossesKilled: 0,
+  wavesCleared: 0,
+});
+
+const isBossWave = (wave: number, rules: RuleSet) =>
+  rules.finalWave === null ? wave > 0 && wave % 5 === 0 : wave === rules.finalWave;
+
+const getWavePlan = (wave: number, rules: RuleSet): WavePlan => {
+  const safeWave = Math.max(1, wave);
+  const total = Math.max(1, Math.round((8 + safeWave * 2) * rules.enemyCount));
+  const sequence: EnemyKind[] = [];
+
+  for (let serial = 0; serial < total; serial += 1) {
+    let kind: EnemyKind = "drone";
+    if (safeWave >= rules.runnerWave && serial % 5 === 3) kind = "runner";
+    if (safeWave >= rules.tankWave && serial % 7 === 6) kind = "tank";
+    if (safeWave >= 3 && serial % 9 === 5) kind = "shield";
+    if (safeWave >= 4 && serial % 11 === 8) kind = "support";
+    sequence.push(kind);
+  }
+
+  const hasBoss = isBossWave(safeWave, rules);
+  if (hasBoss) sequence[sequence.length - 1] = "boss";
+  const counts = createEnemyCounts();
+  sequence.forEach((kind) => { counts[kind] += 1; });
+
+  return {
+    wave: safeWave,
+    sequence,
+    counts,
+    clearBonus: Math.round((20 + safeWave * 5) * rules.waveBonus),
+    hasBoss,
+  };
+};
+
+const getWaveTip = (counts: EnemyCounts) => {
+  if (counts.boss > 0) return "首领来袭：保留 EMP，并用轨道炮集中火力。";
+  if (counts.support > 0) return "修复体将治疗友军，尽早在前段建立交叉火力。";
+  if (counts.shield > 0) return "护盾单位出现：脉冲塔能更快击穿能量盾。";
+  if (counts.runner >= Math.max(2, counts.tank * 2)) return "疾行单位较多：冷凝塔设置“最快”效果更佳。";
+  if (counts.tank > 0) return "重装单位拥有装甲：轨道炮可造成完整伤害。";
+  return "均衡敌群：让不同防御塔覆盖同一处弯道。";
+};
+
+const getTowerRange = (tower: Tower) =>
+  TOWERS[tower.kind].range *
+  (1 + (tower.level - 1) * 0.08) *
+  (tower.specialization === "pulse_overdrive" ? 0.9 : 1);
+
+const getTowerRate = (tower: Tower) =>
+  (TOWERS[tower.kind].rate / (1 + (tower.level - 1) * 0.18)) *
+  (tower.specialization === "pulse_overdrive" ? 0.8 : 1);
+
+const getTowerDamage = (tower: Tower) =>
+  TOWERS[tower.kind].damage * (1 + (tower.level - 1) * 0.46);
+
+const isValidSpecialization = (
+  kind: TowerKind,
+  specialization: TowerSpecialization | null | undefined,
+): specialization is TowerSpecialization =>
+  Boolean(specialization && SPECIALIZATIONS[kind].some((item) => item.id === specialization));
+
+const getRemainingPathDistance = (enemy: Enemy, path: Point[]) => {
+  const next = path[enemy.pathIndex];
+  if (!next) return 0;
+  let remaining = distance(enemy, next);
+  for (let index = enemy.pathIndex; index < path.length - 1; index += 1) {
+    remaining += distance(path[index], path[index + 1]);
+  }
+  return remaining;
+};
+
+const selectTarget = (tower: Tower, enemies: Enemy[], path: Point[]) => {
+  if (enemies.length === 0) return undefined;
+  return [...enemies].sort((a, b) => {
+    if (tower.priority === "strong") {
+      return b.hp + b.shield - (a.hp + a.shield) || getRemainingPathDistance(a, path) - getRemainingPathDistance(b, path);
+    }
+    if (tower.priority === "fast") {
+      return b.speed - a.speed || getRemainingPathDistance(a, path) - getRemainingPathDistance(b, path);
+    }
+    return getRemainingPathDistance(a, path) - getRemainingPathDistance(b, path);
+  })[0];
+};
+
 const createGame = (rules: RuleSet): Game => ({
   enemies: [],
   towers: [],
@@ -342,6 +631,8 @@ const createGame = (rules: RuleSet): Game => ({
   paused: false,
   autoWave: false,
   autoWaveTimer: 0,
+  empCooldown: 0,
+  empPulseUntil: 0,
   speed: 1,
   won: false,
   lost: false,
@@ -351,6 +642,7 @@ const createGame = (rules: RuleSet): Game => ({
   spawnSerial: 0,
   elapsed: 0,
   nextId: 1,
+  stats: createBattleStats(),
 });
 
 const createEmptyGuestSave = (): GuestSave => ({
@@ -397,11 +689,13 @@ const toUi = (game: Game, version = 0): UiState => ({
   paused: game.paused,
   autoWave: game.autoWave,
   autoWaveTimer: game.autoWaveTimer,
+  empCooldown: game.empCooldown,
   speed: game.speed,
   won: game.won,
   lost: game.lost,
   spawnRemaining: game.spawnRemaining,
   spawnTotal: game.spawnTotal,
+  stats: { ...game.stats },
   enemies: game.enemies.length,
   version,
 });
@@ -500,6 +794,7 @@ export default function Home() {
               enemies: game.enemies.map((enemy) => ({ ...enemy })),
               towers: game.towers.map((tower) => ({ ...tower })),
               paused: game.active ? true : game.paused,
+              stats: { ...game.stats },
               projectiles: [],
               particles: [],
             },
@@ -550,16 +845,50 @@ export default function Home() {
       writeGuestSave({ ...guestSaveRef.current, session: null, updatedAt: Date.now() });
       return;
     }
+    const restoredEnemies = session.game.enemies.map((enemy) => {
+      const profile = ENEMY_PROFILES[enemy.kind] ?? ENEMY_PROFILES.drone;
+      return {
+        ...enemy,
+        shield: Number.isFinite(enemy.shield) ? Math.max(0, enemy.shield) : 0,
+        maxShield: Number.isFinite(enemy.maxShield) ? Math.max(0, enemy.maxShield) : 0,
+        armor: Number.isFinite(enemy.armor) ? Math.max(0, enemy.armor) : profile.armor,
+        leakDamage: Number.isFinite(enemy.leakDamage) ? Math.max(1, enemy.leakDamage) : profile.leakDamage,
+        slowResistance: Number.isFinite(enemy.slowResistance)
+          ? Math.max(0, Math.min(0.9, enemy.slowResistance))
+          : profile.slowResistance,
+        abilityTimer: Number.isFinite(enemy.abilityTimer) ? enemy.abilityTimer : 1.4,
+        stunnedUntil: Number.isFinite(enemy.stunnedUntil) ? enemy.stunnedUntil : 0,
+        brittleUntil: Number.isFinite(enemy.brittleUntil) ? enemy.brittleUntil : 0,
+        markedUntil: Number.isFinite(enemy.markedUntil) ? enemy.markedUntil : 0,
+      };
+    });
+    const restoredTowers = session.game.towers.map((tower) => ({
+      ...tower,
+      priority:
+        tower.priority === "first" || tower.priority === "strong" || tower.priority === "fast"
+          ? tower.priority
+          : DEFAULT_PRIORITY[tower.kind],
+      specialization: isValidSpecialization(tower.kind, tower.specialization)
+        ? tower.specialization
+        : tower.level >= 3
+          ? SPECIALIZATIONS[tower.kind][0].id
+          : null,
+    }));
     const restoredGame: Game = {
       ...session.game,
-      enemies: session.game.enemies.map((enemy) => ({ ...enemy })),
-      towers: session.game.towers.map((tower) => ({ ...tower })),
+      enemies: restoredEnemies,
+      towers: restoredTowers,
       paused: session.game.active ? true : false,
       autoWave: Boolean(session.game.autoWave),
       autoWaveTimer:
         Number.isFinite(session.game.autoWaveTimer)
           ? Math.max(0, session.game.autoWaveTimer)
           : 0,
+      empCooldown: Number.isFinite(session.game.empCooldown)
+        ? Math.max(0, session.game.empCooldown)
+        : 0,
+      empPulseUntil: 0,
+      stats: { ...createBattleStats(), ...(session.game.stats ?? {}) },
       projectiles: [],
       particles: [],
     };
@@ -631,6 +960,8 @@ export default function Home() {
       return;
     }
     gameRef.current.gold -= spec.cost;
+    gameRef.current.stats.goldSpent += spec.cost;
+    gameRef.current.stats.towersBuilt += 1;
     gameRef.current.towers.push({
       id: gameRef.current.nextId++,
       kind,
@@ -640,6 +971,8 @@ export default function Home() {
       cooldown: Math.random() * 0.25,
       angle: -Math.PI / 2,
       spent: spec.cost,
+      priority: DEFAULT_PRIORITY[kind],
+      specialization: null,
     });
     syncUi();
     showToast(`${spec.name}已上线`);
@@ -658,12 +991,17 @@ export default function Home() {
     game.wave += 1;
     game.active = true;
     game.paused = false;
-    game.spawnTotal = Math.round((8 + game.wave * 2) * rules.enemyCount);
+    const plan = getWavePlan(game.wave, rules);
+    game.spawnTotal = plan.sequence.length;
     game.spawnRemaining = game.spawnTotal;
     game.spawnSerial = 0;
     game.spawnTimer = 0.15;
     syncUi();
-    showToast(`第 ${game.wave} 波敌袭已侦测`);
+    showToast(
+      plan.hasBoss
+        ? `第 ${game.wave} 波 · 首领“主宰母舰”正在接近`
+        : `第 ${game.wave} 波敌袭已侦测`,
+    );
   };
 
   const toggleAutoWave = () => {
@@ -718,17 +1056,70 @@ export default function Home() {
 
   const upgradeSelected = () => {
     const tower = gameRef.current.towers.find((item) => item.id === selectedTowerRef.current);
-    if (!tower || tower.level >= 3) return;
+    if (!tower || tower.level >= 2) return;
     const cost = Math.round(TOWERS[tower.kind].cost * (0.45 + tower.level * 0.34));
     if (gameRef.current.gold < cost) {
       showToast("能量币不足，暂时无法强化");
       return;
     }
     gameRef.current.gold -= cost;
+    gameRef.current.stats.goldSpent += cost;
     tower.level += 1;
     tower.spent += cost;
     syncUi();
     showToast(`${TOWERS[tower.kind].name}强化至 ${tower.level} 级`);
+  };
+
+  const specializeSelected = (specialization: TowerSpecialization) => {
+    const tower = gameRef.current.towers.find((item) => item.id === selectedTowerRef.current);
+    if (
+      !tower ||
+      tower.level !== 2 ||
+      tower.specialization ||
+      !isValidSpecialization(tower.kind, specialization)
+    ) return;
+    const cost = Math.round(TOWERS[tower.kind].cost * (0.45 + tower.level * 0.34));
+    if (gameRef.current.gold < cost) {
+      showToast("能量币不足，暂时无法完成专精");
+      return;
+    }
+    const branch = SPECIALIZATIONS[tower.kind].find((item) => item.id === specialization)!;
+    gameRef.current.gold -= cost;
+    gameRef.current.stats.goldSpent += cost;
+    tower.level = 3;
+    tower.specialization = specialization;
+    tower.spent += cost;
+    syncUi();
+    showToast(`${TOWERS[tower.kind].name}已解锁“${branch.name}”`);
+  };
+
+  const setTargetPriority = (priority: TargetPriority) => {
+    const tower = gameRef.current.towers.find((item) => item.id === selectedTowerRef.current);
+    if (!tower) return;
+    tower.priority = priority;
+    syncUi();
+    showToast(`${TOWERS[tower.kind].name}已切换为“${PRIORITY_LABELS[priority]}”优先`);
+  };
+
+  const activateEmp = () => {
+    const game = gameRef.current;
+    if (!game.active || game.paused || game.won || game.lost || game.empCooldown > 0) return;
+    const targets = game.enemies.filter((enemy) => !enemy.dead);
+    if (targets.length === 0) {
+      showToast("当前没有可干扰的敌人");
+      return;
+    }
+    targets.forEach((enemy) => {
+      enemy.stunnedUntil = Math.max(
+        enemy.stunnedUntil,
+        game.elapsed + (enemy.kind === "boss" ? 1.25 : 2.4),
+      );
+    });
+    game.empCooldown = EMP_COOLDOWN;
+    game.empPulseUntil = game.elapsed + 0.65;
+    game.stats.skillsUsed += 1;
+    syncUi();
+    showToast(`全域 EMP 已释放，干扰 ${targets.length} 个目标`);
   };
 
   const sellSelected = () => {
@@ -739,6 +1130,7 @@ export default function Home() {
     const [tower] = gameRef.current.towers.splice(index, 1);
     const refund = Math.round(tower.spent * 0.65);
     gameRef.current.gold += refund;
+    gameRef.current.stats.towersSold += 1;
     chooseTower(tower.kind);
     syncUi();
     showToast(`已回收，返还能量币 ${refund}`);
@@ -753,6 +1145,7 @@ export default function Home() {
       if (event.key === "2") chooseTower("frost");
       if (event.key === "3") chooseTower("rail");
       if (event.key.toLowerCase() === "a" && !event.repeat) toggleAutoWave();
+      if (event.key.toLowerCase() === "q" && !event.repeat) activateEmp();
       if (event.code === "Space") {
         event.preventDefault();
         if (gameRef.current.active) togglePause();
@@ -813,29 +1206,37 @@ export default function Home() {
       const rules = activeRulesRef.current;
       const path = activeLevelRef.current.path;
       const serial = game.spawnSerial++;
-      let kind: EnemyKind = "drone";
-      if (game.wave >= rules.runnerWave && serial % 5 === 3) kind = "runner";
-      if (game.wave >= rules.tankWave && serial % 7 === 6) kind = "tank";
+      const plan = getWavePlan(game.wave, rules);
+      const kind = plan.sequence[serial] ?? "drone";
+      const profile = ENEMY_PROFILES[kind];
       const scale = (1.08 + (game.wave - 1) * 0.3) * rules.enemyHealth;
-      const profile =
-        kind === "runner"
-          ? { hp: 38, speed: 92, reward: 10, radius: 12 }
-          : kind === "tank"
-            ? { hp: 210, speed: 35, reward: 28, radius: 20 }
-            : { hp: 72, speed: 53, reward: 13, radius: 15 };
+      const maxHp =
+        kind === "boss"
+          ? (620 + game.wave * 145) * rules.enemyHealth
+          : profile.hp * scale;
+      const maxShield = maxHp * profile.shieldRatio;
       game.enemies.push({
         id: game.nextId++,
         kind,
         x: path[0].x,
         y: path[0].y,
         pathIndex: 1,
-        hp: profile.hp * scale,
-        maxHp: profile.hp * scale,
+        hp: maxHp,
+        maxHp,
         speed: profile.speed * (1.04 + game.wave * 0.015) * rules.enemySpeed,
-        reward: profile.reward + Math.floor(game.wave / 3),
+        reward: kind === "boss" ? 100 + game.wave * 8 : profile.reward + Math.floor(game.wave / 3),
         radius: profile.radius,
         slowUntil: 0,
         slowFactor: 1,
+        shield: maxShield,
+        maxShield,
+        armor: profile.armor,
+        leakDamage: profile.leakDamage,
+        slowResistance: profile.slowResistance,
+        abilityTimer: 1.4 + (serial % 3) * 0.35,
+        stunnedUntil: 0,
+        brittleUntil: 0,
+        markedUntil: 0,
         dead: false,
       });
     };
@@ -846,6 +1247,7 @@ export default function Home() {
       const path = activeLevelRef.current.path;
       if (game.paused || game.won || game.lost) return;
       game.elapsed += dt;
+      game.empCooldown = Math.max(0, game.empCooldown - dt);
 
       if (
         game.autoWave &&
@@ -869,13 +1271,38 @@ export default function Home() {
 
       for (const enemy of game.enemies) {
         if (enemy.dead) continue;
-        let movement =
-          enemy.speed * dt * (enemy.slowUntil > game.elapsed ? enemy.slowFactor : 1);
+        if (enemy.kind === "support" && enemy.stunnedUntil <= game.elapsed) {
+          enemy.abilityTimer -= dt;
+          if (enemy.abilityTimer <= 0) {
+            const ally = game.enemies
+              .filter(
+                (candidate) =>
+                  !candidate.dead &&
+                  candidate.id !== enemy.id &&
+                  candidate.kind !== "support" &&
+                  candidate.hp < candidate.maxHp &&
+                  distance(candidate, enemy) <= 96,
+              )
+              .sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)[0];
+            if (ally) {
+              const heal = Math.min(48, ally.maxHp * 0.08);
+              ally.hp = Math.min(ally.maxHp, ally.hp + heal);
+              burst(ally.x, ally.y, ENEMY_PROFILES.support.color, 7);
+            }
+            enemy.abilityTimer = 2.6;
+          }
+        }
+        const stunnedFactor =
+          enemy.stunnedUntil > game.elapsed ? (enemy.kind === "boss" ? 0.45 : 0.08) : 1;
+        const slowedFactor = enemy.slowUntil > game.elapsed ? enemy.slowFactor : 1;
+        const rageFactor = enemy.kind === "boss" && enemy.hp / enemy.maxHp < 0.35 ? 1.25 : 1;
+        let movement = enemy.speed * dt * Math.min(stunnedFactor, slowedFactor) * rageFactor;
         while (movement > 0 && !enemy.dead) {
           const target = path[enemy.pathIndex];
           if (!target) {
             enemy.dead = true;
-            game.lives -= enemy.kind === "tank" ? 2 : 1;
+            game.lives -= enemy.leakDamage;
+            game.stats.leaks += 1;
             burst(enemy.x, enemy.y, "#dd8b9e", 12);
             if (game.lives <= 0) {
               game.lives = 0;
@@ -902,13 +1329,62 @@ export default function Home() {
         }
       }
 
+      const dealDamage = (
+        enemy: Enemy,
+        amount: number,
+        sourceKind: TowerKind,
+        color: string,
+      ) => {
+        if (enemy.dead) return 0;
+        let amplified = amount;
+        if (enemy.brittleUntil > game.elapsed && sourceKind !== "frost") {
+          amplified *= enemy.kind === "boss" ? 1.09 : 1.18;
+        }
+        if (enemy.markedUntil > game.elapsed) {
+          amplified *= enemy.kind === "boss" ? 1.12 : 1.22;
+        }
+
+        let actualDamage = 0;
+        if (enemy.shield > 0) {
+          const shieldMultiplier = sourceKind === "pulse" ? 1.3 : 1;
+          const shieldDamage = amplified * shieldMultiplier;
+          const absorbed = Math.min(enemy.shield, shieldDamage);
+          enemy.shield -= absorbed;
+          actualDamage += absorbed;
+          amplified = Math.max(0, amplified - absorbed / shieldMultiplier);
+          if (enemy.shield === 0 && absorbed > 0) burst(enemy.x, enemy.y, "#91c9e6", 12);
+        }
+
+        if (amplified > 0) {
+          const armor = sourceKind === "rail" ? 0 : enemy.armor;
+          const hpDamage = amplified * (1 - armor);
+          const dealt = Math.min(enemy.hp, hpDamage);
+          enemy.hp -= hpDamage;
+          actualDamage += dealt;
+        }
+        game.stats.damageDealt += actualDamage;
+
+        if (enemy.hp <= 0 && !enemy.dead) {
+          enemy.dead = true;
+          game.gold += enemy.reward;
+          game.stats.goldEarned += enemy.reward;
+          game.stats.kills += 1;
+          if (enemy.kind === "boss") game.stats.bossesKilled += 1;
+          game.score += Math.round((enemy.maxHp + enemy.maxShield) * 2);
+          burst(enemy.x, enemy.y, color, enemy.kind === "boss" ? 34 : 16);
+        }
+        return actualDamage;
+      };
+
       for (const tower of game.towers) {
         tower.cooldown -= dt;
         const spec = TOWERS[tower.kind];
-        const range = spec.range * (1 + (tower.level - 1) * 0.08);
-        const target = game.enemies
-          .filter((enemy) => !enemy.dead && distance(tower, enemy) <= range)
-          .sort((a, b) => b.pathIndex - a.pathIndex || a.hp - b.hp)[0];
+        const range = getTowerRange(tower);
+        const target = selectTarget(
+          tower,
+          game.enemies.filter((enemy) => !enemy.dead && distance(tower, enemy) <= range),
+          path,
+        );
         if (target) {
           tower.angle = Math.atan2(target.y - tower.y, target.x - tower.x);
           if (tower.cooldown <= 0) {
@@ -918,12 +1394,14 @@ export default function Home() {
               y: tower.y + Math.sin(tower.angle) * 22,
               targetId: target.id,
               speed: spec.projectileSpeed,
-              damage: spec.damage * (1 + (tower.level - 1) * 0.46),
+              damage: getTowerDamage(tower),
               color: spec.color,
               slow: spec.slow,
               size: tower.kind === "rail" ? 5 : 4,
+              sourceTowerId: tower.id,
+              specialization: tower.specialization,
             });
-            tower.cooldown = spec.rate / (1 + (tower.level - 1) * 0.18);
+            tower.cooldown = getTowerRate(tower);
           }
         }
       }
@@ -939,17 +1417,58 @@ export default function Home() {
         const length = Math.hypot(dx, dy);
         const step = projectile.speed * dt;
         if (length <= step + target.radius) {
-          target.hp -= projectile.damage;
-          if (projectile.slow) {
-            target.slowFactor = projectile.slow;
-            target.slowUntil = game.elapsed + 1.55;
+          dealDamage(target, projectile.damage, projectile.kind, projectile.color);
+          if (projectile.slow && !target.dead) {
+            const rawSlow = projectile.specialization === "frost_zero" ? 0.42 : projectile.slow;
+            const resistedSlow = 1 - (1 - rawSlow) * (1 - target.slowResistance);
+            target.slowFactor =
+              target.slowUntil > game.elapsed
+                ? Math.min(target.slowFactor, resistedSlow)
+                : resistedSlow;
+            target.slowUntil = Math.max(
+              target.slowUntil,
+              game.elapsed + (projectile.specialization === "frost_zero" ? 2.1 : 1.55),
+            );
+            if (projectile.specialization === "frost_brittle") {
+              target.brittleUntil = Math.max(target.brittleUntil, game.elapsed + 1.9);
+            }
+          }
+          if (projectile.specialization === "rail_mark" && !target.dead) {
+            target.markedUntil = Math.max(target.markedUntil, game.elapsed + 3);
           }
           burst(target.x, target.y, projectile.color, 5);
-          if (target.hp <= 0 && !target.dead) {
-            target.dead = true;
-            game.gold += target.reward;
-            game.score += Math.round(target.maxHp * 2);
-            burst(target.x, target.y, projectile.color, 16);
+
+          if (projectile.specialization === "pulse_chain") {
+            const chainTarget = game.enemies
+              .filter(
+                (enemy) =>
+                  !enemy.dead &&
+                  enemy.id !== target.id &&
+                  distance(enemy, target) <= 92,
+              )
+              .sort((a, b) => distance(a, target) - distance(b, target))[0];
+            if (chainTarget) {
+              dealDamage(chainTarget, projectile.damage * 0.55, "pulse", projectile.color);
+              burst(chainTarget.x, chainTarget.y, projectile.color, 5);
+            }
+          }
+
+          if (projectile.specialization === "rail_pierce") {
+            const pierceTarget = game.enemies
+              .filter(
+                (enemy) =>
+                  !enemy.dead &&
+                  enemy.id !== target.id &&
+                  distance(enemy, target) <= 118,
+              )
+              .sort(
+                (a, b) =>
+                  getRemainingPathDistance(a, path) - getRemainingPathDistance(b, path),
+              )[0];
+            if (pierceTarget) {
+              dealDamage(pierceTarget, projectile.damage * 0.6, "rail", projectile.color);
+              burst(pierceTarget.x, pierceTarget.y, projectile.color, 7);
+            }
           }
         } else {
           projectile.x += (dx / length) * step;
@@ -976,8 +1495,10 @@ export default function Home() {
         !game.lost
       ) {
         game.active = false;
-        const bonus = Math.round((20 + game.wave * 5) * rules.waveBonus);
+        const bonus = getWavePlan(game.wave, rules).clearBonus;
         game.gold += bonus;
+        game.stats.goldEarned += bonus;
+        game.stats.wavesCleared += 1;
         if (rules.finalWave !== null && game.wave >= rules.finalWave) {
           game.won = true;
           game.autoWaveTimer = 0;
@@ -1149,7 +1670,7 @@ export default function Home() {
     const drawTowerBase = (tower: Tower, selected: boolean) => {
       const spec = TOWERS[tower.kind];
       if (selected) {
-        const range = spec.range * (1 + (tower.level - 1) * 0.08);
+        const range = getTowerRange(tower);
         ctx.beginPath();
         ctx.arc(0, 0, range, 0, Math.PI * 2);
         ctx.fillStyle = `${spec.color}0d`;
@@ -1284,13 +1805,24 @@ export default function Home() {
         ctx.arc(-2, -30, 2, 0, Math.PI * 2);
         ctx.fillStyle = spec.color;
         ctx.fill();
+        ctx.rotate(tower.angle);
+        ctx.beginPath();
+        ctx.arc(0, 0, 24 + Math.sin(gameRef.current.elapsed * 3 + tower.id) * 1.4, 0, Math.PI * 2);
+        ctx.setLineDash([3, 6]);
+        ctx.strokeStyle = `${spec.color}72`;
+        ctx.lineWidth = 1.3;
+        ctx.stroke();
+        ctx.setLineDash([]);
       }
       ctx.restore();
     };
 
     const drawEnemy = (enemy: Enemy) => {
-      const color = enemy.kind === "runner" ? "#dda0c2" : enemy.kind === "tank" ? "#df918e" : "#dce7f3";
+      const color = ENEMY_PROFILES[enemy.kind].color;
       const slowed = enemy.slowUntil > gameRef.current.elapsed;
+      const stunned = enemy.stunnedUntil > gameRef.current.elapsed;
+      const brittle = enemy.brittleUntil > gameRef.current.elapsed;
+      const marked = enemy.markedUntil > gameRef.current.elapsed;
       const target = activeLevelRef.current.path[enemy.pathIndex];
       const angle = target ? Math.atan2(target.y - enemy.y, target.x - enemy.x) : 0;
       const bob = enemy.kind === "runner" ? Math.sin(gameRef.current.elapsed * 12 + enemy.id) * 1.4 : 0;
@@ -1302,7 +1834,77 @@ export default function Home() {
       ctx.fillStyle = "rgba(2, 7, 16, .46)";
       ctx.fill();
 
-      if (enemy.kind === "runner") {
+      if (enemy.kind === "boss") {
+        ctx.save();
+        ctx.rotate(-gameRef.current.elapsed * 0.55);
+        ctx.setLineDash([8, 6]);
+        ctx.beginPath();
+        ctx.arc(0, 0, 34, 0, Math.PI * 2);
+        ctx.strokeStyle = enemy.hp / enemy.maxHp < 0.35 ? "#df918e" : `${color}98`;
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.restore();
+        polygonPath(ctx, [
+          { x: 28, y: 0 }, { x: 15, y: -20 }, { x: -12, y: -22 }, { x: -27, y: -9 },
+          { x: -27, y: 9 }, { x: -12, y: 22 }, { x: 15, y: 20 },
+        ]);
+        ctx.fillStyle = "#45394d";
+        ctx.fill();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2.6;
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(5, 0, 10, 0, Math.PI * 2);
+        ctx.fillStyle = enemy.hp / enemy.maxHp < 0.35 ? "#df918e" : color;
+        ctx.globalAlpha = 0.82 + Math.sin(gameRef.current.elapsed * 5) * 0.12;
+        ctx.fill();
+        ctx.globalAlpha = 1;
+        [-12, 10].forEach((y) => {
+          ctx.fillStyle = "rgba(241, 221, 178, .72)";
+          ctx.fillRect(-21, y - 1.5, 13, 3);
+        });
+      } else if (enemy.kind === "shield") {
+        ctx.beginPath();
+        ctx.arc(0, 0, 16, 0, Math.PI * 2);
+        ctx.fillStyle = "#263b50";
+        ctx.fill();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        polygonPath(ctx, [
+          { x: 4, y: -7 }, { x: 19, y: -10 }, { x: 15, y: 0 }, { x: 19, y: 10 }, { x: 4, y: 7 },
+        ]);
+        ctx.fillStyle = "#315067";
+        ctx.fill();
+        ctx.strokeStyle = `${color}aa`;
+        ctx.stroke();
+        if (enemy.shield > 0) {
+          ctx.beginPath();
+          ctx.arc(0, 0, 22 + Math.sin(gameRef.current.elapsed * 5 + enemy.id) * 1.2, -1.2, 1.2);
+          ctx.strokeStyle = "rgba(145, 201, 230, .78)";
+          ctx.lineWidth = 3;
+          ctx.stroke();
+        }
+      } else if (enemy.kind === "support") {
+        polygonPath(ctx, [
+          { x: 18, y: 0 }, { x: 7, y: -15 }, { x: -13, y: -12 }, { x: -18, y: 0 },
+          { x: -13, y: 12 }, { x: 7, y: 15 },
+        ]);
+        ctx.fillStyle = "#29443f";
+        ctx.fill();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.fillStyle = color;
+        ctx.fillRect(-3, -9, 6, 18);
+        ctx.fillRect(-9, -3, 18, 6);
+        ctx.beginPath();
+        ctx.arc(0, 0, 20 + Math.sin(gameRef.current.elapsed * 3 + enemy.id) * 2, 0, Math.PI * 2);
+        ctx.strokeStyle = "rgba(139, 202, 174, .25)";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      } else if (enemy.kind === "runner") {
         ctx.strokeStyle = "rgba(221, 160, 194, .28)";
         ctx.lineWidth = 2;
         [-5, 5].forEach((y) => {
@@ -1395,9 +1997,29 @@ export default function Home() {
           ctx.fill();
         });
       }
+      if (stunned) {
+        ctx.beginPath();
+        ctx.arc(0, 0, enemy.radius + 10, -Math.PI * 0.75, Math.PI * 0.68);
+        ctx.strokeStyle = "#8fdde3";
+        ctx.lineWidth = 2.4;
+        ctx.stroke();
+        ctx.fillStyle = "#dff9fa";
+        [-9, 0, 9].forEach((x, index) => {
+          ctx.fillRect(x - 1.5, -enemy.radius - 13 - (index % 2) * 3, 3, 6);
+        });
+      }
+      if (brittle || marked) {
+        ctx.beginPath();
+        ctx.arc(0, 0, enemy.radius + 8, 0, Math.PI * 2);
+        ctx.setLineDash(brittle ? [2, 5] : [8, 5]);
+        ctx.strokeStyle = brittle ? "rgba(180, 164, 221, .82)" : "rgba(228, 189, 132, .9)";
+        ctx.lineWidth = 1.8;
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
       ctx.restore();
 
-      const barWidth = enemy.kind === "tank" ? 42 : 32;
+      const barWidth = enemy.kind === "boss" ? 62 : enemy.kind === "tank" ? 42 : 32;
       const barY = enemy.y - enemy.radius - 12;
       roundedRect(ctx, enemy.x - barWidth / 2 - 1, barY - 1, barWidth + 2, 7, 3);
       ctx.fillStyle = "rgba(9, 15, 27, .9)";
@@ -1410,6 +2032,18 @@ export default function Home() {
       if (highlightWidth > 0) {
         ctx.fillStyle = "rgba(255,255,255,.22)";
         ctx.fillRect(enemy.x - barWidth / 2 + 2, barY + 1, highlightWidth, 1);
+      }
+      if (enemy.maxShield > 0 && enemy.shield > 0) {
+        const shieldWidth = barWidth * Math.max(0, enemy.shield / enemy.maxShield);
+        roundedRect(ctx, enemy.x - barWidth / 2, barY - 5, shieldWidth, 3, 1.5);
+        ctx.fillStyle = "#91c9e6";
+        ctx.fill();
+      }
+      if (enemy.kind === "boss") {
+        ctx.fillStyle = "#e8cc9d";
+        ctx.font = '800 10px "Microsoft YaHei UI", "PingFang SC", sans-serif';
+        ctx.textAlign = "center";
+        ctx.fillText("首领", enemy.x, barY - 8);
       }
     };
 
@@ -1560,6 +2194,22 @@ export default function Home() {
         ctx.restore();
       }
 
+      if (game.empPulseUntil > game.elapsed) {
+        const progress = 1 - (game.empPulseUntil - game.elapsed) / 0.65;
+        const radius = 80 + progress * 860;
+        ctx.save();
+        ctx.globalCompositeOperation = "lighter";
+        ctx.globalAlpha = Math.max(0, 0.34 * (1 - progress));
+        ctx.beginPath();
+        ctx.arc(WIDTH / 2, HEIGHT / 2, radius, 0, Math.PI * 2);
+        ctx.strokeStyle = "#8fdde3";
+        ctx.lineWidth = 22 * (1 - progress) + 2;
+        ctx.stroke();
+        ctx.fillStyle = "rgba(143, 221, 227, .08)";
+        ctx.fillRect(0, 0, WIDTH, HEIGHT);
+        ctx.restore();
+      }
+
       if (game.paused) {
         ctx.fillStyle = "rgba(13, 19, 35, .58)";
         ctx.fillRect(0, 0, WIDTH, HEIGHT);
@@ -1645,9 +2295,17 @@ export default function Home() {
     const previous = guestSaveRef.current.records[key] ?? {
       bestScore: 0,
       bestWave: 0,
+      bestStars: 0,
       wins: 0,
       plays: 0,
     };
+    const earnedStars = ui.won
+      ? ui.stats.leaks === 0
+        ? 3
+        : ui.lives >= Math.ceil(activeMission.rules.lives * 0.5)
+          ? 2
+          : 1
+      : 0;
     const now = Date.now();
     writeGuestSave({
       ...guestSaveRef.current,
@@ -1658,6 +2316,7 @@ export default function Home() {
         [key]: {
           bestScore: Math.max(previous.bestScore, ui.score),
           bestWave: Math.max(previous.bestWave, ui.wave),
+          bestStars: Math.max(previous.bestStars ?? 0, earnedStars),
           wins: previous.wins + (ui.won ? 1 : 0),
           plays: previous.plays + 1,
         },
@@ -1667,11 +2326,40 @@ export default function Home() {
 
   const remaining = ui.enemies + ui.spawnRemaining;
   const selectedSpec = selectedTower ? TOWERS[selectedTower.kind] : null;
+  const selectedSpecialization =
+    selectedTower && selectedTower.specialization
+      ? SPECIALIZATIONS[selectedTower.kind].find(
+          (item) => item.id === selectedTower.specialization,
+        ) ?? null
+      : null;
   const upgradeCost = selectedTower
     ? Math.round(selectedSpec!.cost * (0.45 + selectedTower.level * 0.34))
     : 0;
 
   const finalWave = activeRulesRef.current.finalWave;
+  const inspectedWave = ui.active || ui.won || ui.lost ? Math.max(1, ui.wave) : ui.wave + 1;
+  const inspectedPlan = getWavePlan(inspectedWave, activeRulesRef.current);
+  const intelCounts = createEnemyCounts();
+  if (ui.active) {
+    gameRef.current.enemies.forEach((enemy) => {
+      if (!enemy.dead) intelCounts[enemy.kind] += 1;
+    });
+    inspectedPlan.sequence.slice(gameRef.current.spawnSerial).forEach((kind) => {
+      intelCounts[kind] += 1;
+    });
+  } else if (!ui.won && !ui.lost) {
+    ENEMY_ORDER.forEach((kind) => { intelCounts[kind] = inspectedPlan.counts[kind]; });
+  }
+  const waveProgress = ui.spawnTotal > 0
+    ? Math.max(0, Math.min(1, (ui.spawnTotal - remaining) / ui.spawnTotal))
+    : 0;
+  const earnedStars = ui.won
+    ? ui.stats.leaks === 0
+      ? 3
+      : ui.lives >= Math.ceil(activeMission.rules.lives * 0.5)
+        ? 2
+        : 1
+    : 0;
   const localRecordCount = Object.keys(guestSave.records).length;
   const localBestScore = Object.values(guestSave.records).reduce(
     (best, record) => Math.max(best, record.bestScore),
@@ -1702,9 +2390,9 @@ export default function Home() {
           <>
             <section className="menuHero">
               <div className="heroCopy">
-                <p className="heroKicker"><span>新任务已解锁</span> / 指挥官终端</p>
+                <p className="heroKicker"><span>战术系统已升级</span> / 指挥官终端</p>
                 <h1>选择你的防线，<br /><em>守住最后的核心。</em></h1>
-                <p className="heroLead">六个战区、三种特殊协议。观察敌军路线，在有限部署点建立你的霓虹防线。</p>
+                <p className="heroLead">预判下一波敌军、选择炮塔专精并释放全域 EMP，在首领抵达核心前完成你的霓虹防线。</p>
                 {savedSession && (
                   <button className="continueMenuButton" onClick={resumeGuestSession}>
                     <span>
@@ -1735,7 +2423,7 @@ export default function Home() {
             </section>
             <section className="menuSummary" aria-label="游戏内容概览">
               <article><strong>06</strong><span><b>战役关卡</b><small>从数据港到核心迷城</small></span></article>
-              <article><strong>03</strong><span><b>特殊模式</b><small>生存、闪电与硬核挑战</small></span></article>
+              <article><strong>06</strong><span><b>敌军类别</b><small>护盾、修复与首领单位</small></span></article>
               <article>
                 <strong>{localRecordCount.toString().padStart(2, "0")}</strong>
                 <span>
@@ -1754,19 +2442,32 @@ export default function Home() {
               <span>关卡越靠后，资源更少、敌人更强。</span>
             </div>
             <div className="levelGrid">
-              {LEVELS.map((level) => (
-                <button
-                  key={level.id}
-                  className="levelCard"
-                  style={{ "--card-accent": level.accent } as React.CSSProperties}
-                  onClick={() => startMission(level, level.rules, "战役模式", level.name)}
-                >
-                  <span className="levelTop"><i>{level.id.toString().padStart(2, "0")}</i><b>{level.difficulty}</b></span>
-                  <span className="levelRoute" aria-hidden="true"><i /><i /><i /><i /><i /></span>
-                  <span className="levelCopy"><small>{level.sector}</small><strong>{level.name}</strong><em>{level.description}</em></span>
-                  <span className="levelMeta"><i>{level.pads.length} 个部署点</i><b>{level.rules.finalWave} 波 →</b></span>
-                </button>
-              ))}
+              {LEVELS.map((level) => {
+                const record = guestSave.records[`战役模式:${level.name}`];
+                const stars = record?.bestStars ?? 0;
+                return (
+                  <button
+                    key={level.id}
+                    className="levelCard"
+                    style={{ "--card-accent": level.accent } as React.CSSProperties}
+                    onClick={() => startMission(level, level.rules, "战役模式", level.name)}
+                  >
+                    <span className="levelTop">
+                      <i>{level.id.toString().padStart(2, "0")}</i>
+                      <span className="levelStars" aria-label={`最好成绩 ${stars} 星`}>
+                        {[1, 2, 3].map((star) => <em key={star} className={star <= stars ? "earned" : ""}>◆</em>)}
+                      </span>
+                      <b>{level.difficulty}</b>
+                    </span>
+                    <span className="levelRoute" aria-hidden="true"><i /><i /><i /><i /><i /></span>
+                    <span className="levelCopy"><small>{level.sector}</small><strong>{level.name}</strong><em>{level.description}</em></span>
+                    <span className="levelMeta">
+                      <i>{record ? `最高 ${record.bestScore.toLocaleString()} 分` : `${level.pads.length} 个部署点`}</i>
+                      <b>{level.rules.finalWave} 波 →</b>
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           </section>
         )}
@@ -1803,7 +2504,7 @@ export default function Home() {
           </section>
         )}
 
-        <footer className="menuFooter"><span>NEON GRID DEFENSE // BUILD 03.1</span><span>游客档案仅保存在当前设备</span></footer>
+        <footer className="menuFooter"><span>NEON GRID DEFENSE // BUILD 04.0</span><span>游客档案仅保存在当前设备</span></footer>
       </main>
     );
   }
@@ -1844,8 +2545,12 @@ export default function Home() {
         <button className="backLobbyButton" onClick={returnToLobby}>← 返回大厅</button>
         <div className="threatLine">
           <span className={`signal ${ui.active && !ui.paused ? "live" : ""}`} />
-          <div>
-            <small>{ui.active ? "检测到威胁" : "区域状态"}</small>
+          <div className="threatCopy">
+            <small>
+              {ui.active
+                ? `第 ${ui.wave} 波${inspectedPlan.hasBoss ? " · 首领警报" : ""}`
+                : `下一波情报 · 第 ${inspectedWave} 波`}
+            </small>
             <strong>
               {ui.won
                 ? "区域安全"
@@ -1859,6 +2564,9 @@ export default function Home() {
                         ? "等待首次部署"
                         : "波次间歇"}
             </strong>
+            <span className="threatProgress" aria-hidden="true">
+              <i style={{ width: `${(ui.active ? waveProgress : 0) * 100}%` }} />
+            </span>
           </div>
         </div>
         <div className="controls">
@@ -1889,6 +2597,23 @@ export default function Home() {
                   ? "开"
                   : "关"}
             </b>
+          </button>
+          <button
+            className={`empButton ${ui.empCooldown <= 0 ? "ready" : ""}`}
+            onClick={activateEmp}
+            disabled={
+              !ui.active ||
+              ui.paused ||
+              ui.enemies === 0 ||
+              ui.empCooldown > 0 ||
+              ui.won ||
+              ui.lost
+            }
+            aria-label={ui.empCooldown > 0 ? `EMP 冷却 ${Math.ceil(ui.empCooldown)} 秒` : "释放全域 EMP"}
+            title="全域 EMP（快捷键 Q）"
+          >
+            <span><kbd>Q</kbd> EMP</span>
+            <b>{ui.empCooldown > 0 ? `${Math.ceil(ui.empCooldown)}s` : "就绪"}</b>
           </button>
           <button
             className="waveButton"
@@ -1972,20 +2697,35 @@ export default function Home() {
               <div className="resultOverlay">
                 <p>{ui.won ? "区域已保卫" : "核心已失守"}</p>
                 <h2>{ui.won ? "黎明已至" : "防线失守"}</h2>
+                {ui.won && (
+                  <div className="resultStars" aria-label={`本局获得 ${earnedStars} 星`}>
+                    {[1, 2, 3].map((star) => <i key={star} className={star <= earnedStars ? "earned" : ""}>◆</i>)}
+                  </div>
+                )}
                 <span>
                   {ui.won
                     ? `最终得分 ${ui.score.toLocaleString()} · 核心完整度 ${ui.lives}/${activeMission.rules.lives}`
                     : `坚持到第 ${ui.wave} 波 · 最终得分 ${ui.score.toLocaleString()}`}
                 </span>
+                <div className="battleReport" aria-label="本局战报">
+                  <span><small>击破</small><b>{ui.stats.kills}</b></span>
+                  <span><small>总伤害</small><b>{Math.round(ui.stats.damageDealt).toLocaleString()}</b></span>
+                  <span><small>漏过</small><b>{ui.stats.leaks}</b></span>
+                  <span><small>EMP</small><b>{ui.stats.skillsUsed}</b></span>
+                </div>
                 <button onClick={resetGame}>重新部署</button>
               </div>
             )}
           </div>
           <div className="arenaFooter">
-            <span><i className="legendDot standard" />巡航体</span>
-            <span><i className="legendDot runner" />疾行体</span>
-            <span><i className="legendDot tank" />重装体</span>
-            <em>空格：开始 / 暂停 · A：自动波次</em>
+            <div className="arenaEnemySummary" aria-label="敌军构成">
+              {ENEMY_ORDER.filter((kind) => intelCounts[kind] > 0).map((kind) => (
+                <span key={kind} className={`enemyTag ${kind}`}>
+                  <i />{ENEMY_PROFILES[kind].shortName} ×{intelCounts[kind]}
+                </span>
+              ))}
+            </div>
+            <em>空格：开始 / 暂停 · A：自动 · Q：EMP</em>
           </div>
         </section>
 
@@ -2032,23 +2772,63 @@ export default function Home() {
                   </div>
                 </div>
                 <div className="metrics">
-                  <span><small>伤害</small><b>{Math.round(selectedSpec.damage * (1 + (selectedTower.level - 1) * 0.46))}</b></span>
-                  <span><small>范围</small><b>{Math.round(selectedSpec.range * (1 + (selectedTower.level - 1) * 0.08))}</b></span>
-                  <span><small>射速</small><b>{(1 / (selectedSpec.rate / (1 + (selectedTower.level - 1) * 0.18))).toFixed(1)}</b></span>
+                  <span><small>伤害</small><b>{Math.round(getTowerDamage(selectedTower))}</b></span>
+                  <span><small>范围</small><b>{Math.round(getTowerRange(selectedTower))}</b></span>
+                  <span><small>射速</small><b>{(1 / getTowerRate(selectedTower)).toFixed(1)}</b></span>
                 </div>
-                <div className="inspectorActions">
-                  <button
-                    className="upgradeButton"
-                    onClick={upgradeSelected}
-                    disabled={selectedTower.level >= 3}
-                  >
-                    <span>{selectedTower.level >= 3 ? "已达满级" : "强化单元"}</span>
-                    {selectedTower.level < 3 && <b>◈ {upgradeCost}</b>}
-                  </button>
-                  <button className="sellButton" onClick={sellSelected}>
-                    回收 +{Math.round(selectedTower.spent * 0.65)}
-                  </button>
+                <div className="priorityControl">
+                  <span>目标策略</span>
+                  <div>
+                    {(Object.keys(PRIORITY_LABELS) as TargetPriority[]).map((priority) => (
+                      <button
+                        key={priority}
+                        className={selectedTower.priority === priority ? "active" : ""}
+                        onClick={() => setTargetPriority(priority)}
+                        aria-pressed={selectedTower.priority === priority}
+                      >
+                        {PRIORITY_LABELS[priority]}
+                      </button>
+                    ))}
+                  </div>
                 </div>
+                {selectedTower.level === 2 && !selectedTower.specialization ? (
+                  <>
+                    <div className="specializationPicker">
+                      <div className="specializationLabel"><span>三级专精 · 二选一</span><b>◈ {upgradeCost}</b></div>
+                      <div>
+                        {SPECIALIZATIONS[selectedTower.kind].map((branch) => (
+                          <button key={branch.id} onClick={() => specializeSelected(branch.id)}>
+                            <b>{branch.name}</b><small>{branch.description}</small>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <button className="sellButton wide" onClick={sellSelected}>
+                      回收单元 +{Math.round(selectedTower.spent * 0.65)}
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    {selectedSpecialization && (
+                      <div className="specializationSummary">
+                        <span>已激活专精</span><b>{selectedSpecialization.name}</b><small>{selectedSpecialization.description}</small>
+                      </div>
+                    )}
+                    <div className="inspectorActions">
+                      <button
+                        className="upgradeButton"
+                        onClick={upgradeSelected}
+                        disabled={selectedTower.level >= 2}
+                      >
+                        <span>{selectedTower.level >= 3 ? "专精已完成" : "强化至 2 级"}</span>
+                        {selectedTower.level < 2 && <b>◈ {upgradeCost}</b>}
+                      </button>
+                      <button className="sellButton" onClick={sellSelected}>
+                        回收 +{Math.round(selectedTower.spent * 0.65)}
+                      </button>
+                    </div>
+                  </>
+                )}
               </>
             ) : (
               <div className="emptyInspector">
@@ -2058,9 +2838,30 @@ export default function Home() {
             )}
           </div>
 
-          <div className="missionNote">
-            <span>指挥官提示</span>
-            <p>弯道是火力覆盖的黄金位置。冷凝塔与轨道炮组合能有效处理重装目标。</p>
+          <div className="waveIntel">
+            <div className="waveIntelTitle">
+              <span>{ui.active ? "本波剩余" : "下一波情报"}</span>
+              <b>第 {inspectedWave} 波{inspectedPlan.hasBoss ? " · 首领" : ""}</b>
+            </div>
+            <div className="waveIntelCounts">
+              {ENEMY_ORDER.filter((kind) => intelCounts[kind] > 0).map((kind) => (
+                <span key={kind} className={`enemyTag ${kind}`}>
+                  <i />{ENEMY_PROFILES[kind].shortName} ×{intelCounts[kind]}
+                </span>
+              ))}
+            </div>
+            <div className="waveIntelReward">
+              <span>清除补给</span><b>◈ {inspectedPlan.clearBonus}</b>
+            </div>
+            <p>{getWaveTip(intelCounts)}</p>
+            <details className="enemyGuide">
+              <summary>查看敌情档案</summary>
+              <div>
+                {ENEMY_ORDER.map((kind) => (
+                  <p key={kind}><b>{ENEMY_PROFILES[kind].name}</b><span>{ENEMY_PROFILES[kind].description}</span></p>
+                ))}
+              </div>
+            </details>
           </div>
         </aside>
       </div>
