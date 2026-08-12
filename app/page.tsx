@@ -657,7 +657,6 @@ export default function Home() {
       ctx.restore();
 
       ctx.save();
-      ctx.font = "700 10px ui-monospace, monospace";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       for (let index = 0; index < tower.level; index += 1) {
@@ -739,7 +738,7 @@ export default function Home() {
       ctx.save();
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.font = "800 11px ui-monospace, monospace";
+      ctx.font = '800 18px "Microsoft YaHei UI", "PingFang SC", sans-serif';
       ctx.fillStyle = "#54f1ff";
       ctx.fillText("入口", 30, 108);
       ctx.fillStyle = "#ff5470";
