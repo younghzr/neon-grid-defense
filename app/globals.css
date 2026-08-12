@@ -401,7 +401,7 @@ canvas {
   padding: 0;
   place-items: center;
   border: 2px solid rgba(84, 241, 255, 0.55);
-  border-radius: 50%;
+  border-radius: 8px;
   background: rgba(8, 23, 40, 0.86);
   color: rgba(84, 241, 255, 0.78);
   cursor: pointer;
@@ -415,7 +415,7 @@ canvas {
   inset: 4px;
   content: "";
   border: 1px dashed rgba(84, 241, 255, 0.32);
-  border-radius: 50%;
+  border-radius: 4px;
 }
 
 .buildPad span {

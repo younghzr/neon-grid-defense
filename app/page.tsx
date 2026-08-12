@@ -90,36 +90,33 @@ type UiState = Pick<
 > & { enemies: number; version: number };
 
 const PATH: Point[] = [
-  { x: -36, y: 124 },
-  { x: 170, y: 124 },
-  { x: 170, y: 282 },
-  { x: 366, y: 282 },
-  { x: 366, y: 104 },
-  { x: 604, y: 104 },
-  { x: 604, y: 410 },
-  { x: 790, y: 410 },
-  { x: 790, y: 236 },
-  { x: 996, y: 236 },
+  { x: -40, y: 150 },
+  { x: 160, y: 150 },
+  { x: 160, y: 310 },
+  { x: 400, y: 310 },
+  { x: 400, y: 150 },
+  { x: 640, y: 150 },
+  { x: 640, y: 470 },
+  { x: 800, y: 470 },
+  { x: 800, y: 310 },
+  { x: 1000, y: 310 },
 ];
 
 const BUILD_PADS: Array<{ id: string; point: Point }> = [
-  { id: "A1", point: { x: 72, y: 52 } },
-  { id: "A2", point: { x: 96, y: 202 } },
-  { id: "B1", point: { x: 244, y: 202 } },
-  { id: "B2", point: { x: 250, y: 360 } },
-  { id: "B3", point: { x: 292, y: 182 } },
-  { id: "C1", point: { x: 290, y: 54 } },
-  { id: "C2", point: { x: 442, y: 34 } },
-  { id: "C3", point: { x: 520, y: 180 } },
-  { id: "D1", point: { x: 526, y: 330 } },
-  { id: "D2", point: { x: 526, y: 486 } },
-  { id: "E1", point: { x: 680, y: 330 } },
-  { id: "E2", point: { x: 684, y: 486 } },
-  { id: "E3", point: { x: 714, y: 172 } },
-  { id: "F1", point: { x: 864, y: 166 } },
-  { id: "F2", point: { x: 868, y: 310 } },
-  { id: "F3", point: { x: 890, y: 408 } },
-  { id: "F4", point: { x: 885, y: 490 } },
+  { id: "A1", point: { x: 80, y: 70 } },
+  { id: "A2", point: { x: 80, y: 230 } },
+  { id: "B1", point: { x: 240, y: 230 } },
+  { id: "B2", point: { x: 320, y: 230 } },
+  { id: "B3", point: { x: 320, y: 390 } },
+  { id: "C1", point: { x: 480, y: 70 } },
+  { id: "C2", point: { x: 480, y: 230 } },
+  { id: "C3", point: { x: 560, y: 230 } },
+  { id: "D1", point: { x: 720, y: 230 } },
+  { id: "D2", point: { x: 560, y: 390 } },
+  { id: "D3", point: { x: 720, y: 390 } },
+  { id: "D4", point: { x: 720, y: 550 } },
+  { id: "E1", point: { x: 880, y: 230 } },
+  { id: "E2", point: { x: 880, y: 390 } },
 ];
 
 const TOWERS: Record<
@@ -723,13 +720,13 @@ export default function Home() {
       ctx.save();
       ctx.strokeStyle = "rgba(130, 170, 220, .055)";
       ctx.lineWidth = 1;
-      for (let x = 18; x < WIDTH; x += 36) {
+      for (let x = 0; x <= WIDTH; x += 80) {
         ctx.beginPath();
         ctx.moveTo(x, 0);
         ctx.lineTo(x, HEIGHT);
         ctx.stroke();
       }
-      for (let y = 18; y < HEIGHT; y += 36) {
+      for (let y = 70; y < HEIGHT; y += 80) {
         ctx.beginPath();
         ctx.moveTo(0, y);
         ctx.lineTo(WIDTH, y);
@@ -744,11 +741,11 @@ export default function Home() {
       ctx.textBaseline = "middle";
       ctx.font = "800 11px ui-monospace, monospace";
       ctx.fillStyle = "#54f1ff";
-      ctx.fillText("入口", 32, 82);
+      ctx.fillText("入口", 30, 108);
       ctx.fillStyle = "#ff5470";
-      ctx.fillText("核心", 925, 194);
+      ctx.fillText("核心", 925, 268);
       ctx.beginPath();
-      ctx.arc(925, 236, 23 + Math.sin(game.elapsed * 3) * 3, 0, Math.PI * 2);
+      ctx.arc(925, 310, 23 + Math.sin(game.elapsed * 3) * 3, 0, Math.PI * 2);
       ctx.strokeStyle = "rgba(255, 84, 112, .7)";
       ctx.lineWidth = 3;
       ctx.stroke();
@@ -997,7 +994,7 @@ export default function Home() {
             {ui.wave === 0 && gameRef.current.towers.length === 0 && (
               <div className="firstHint" aria-hidden="true">
                 <span>01</span>
-                <p><b>选择防御塔</b>点击道路两侧的圆形部署点</p>
+                <p><b>选择防御塔</b>点击道路两侧的方形部署点</p>
               </div>
             )}
             {(ui.won || ui.lost) && (
