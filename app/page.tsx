@@ -359,7 +359,7 @@ export default function Home() {
     tower.level += 1;
     tower.spent += cost;
     syncUi();
-    showToast(`${TOWERS[tower.kind].name}强化至 Lv.${tower.level}`);
+    showToast(`${TOWERS[tower.kind].name}强化至 ${tower.level} 级`);
   };
 
   const sellSelected = () => {
@@ -749,9 +749,9 @@ export default function Home() {
       ctx.textBaseline = "middle";
       ctx.font = "800 11px ui-monospace, monospace";
       ctx.fillStyle = "#54f1ff";
-      ctx.fillText("ENTRY", 32, 82);
+      ctx.fillText("入口", 32, 82);
       ctx.fillStyle = "#ff5470";
-      ctx.fillText("CORE", 925, 194);
+      ctx.fillText("核心", 925, 194);
       ctx.beginPath();
       ctx.arc(925, 236, 23 + Math.sin(game.elapsed * 3) * 3, 0, Math.PI * 2);
       ctx.strokeStyle = "rgba(255, 84, 112, .7)";
@@ -858,7 +858,7 @@ export default function Home() {
             <span />
           </div>
           <div>
-            <p className="eyebrow">NIGHT GRID / SECTOR 07</p>
+            <p className="eyebrow">夜幕网格 / 第 07 区</p>
             <h1>霓虹防线</h1>
           </div>
         </div>
@@ -876,7 +876,7 @@ export default function Home() {
             <span><small>波次</small><strong>{ui.wave} / {FINAL_WAVE}</strong></span>
           </div>
           <div className="score">
-            <small>SCORE</small>
+            <small>战绩</small>
             <strong>{ui.score.toString().padStart(6, "0")}</strong>
           </div>
         </div>
@@ -886,7 +886,7 @@ export default function Home() {
         <div className="threatLine">
           <span className={`signal ${ui.active && !ui.paused ? "live" : ""}`} />
           <div>
-            <small>{ui.active ? "THREAT DETECTED" : "SECTOR STATUS"}</small>
+            <small>{ui.active ? "检测到威胁" : "区域状态"}</small>
             <strong>
               {ui.won
                 ? "区域安全"
@@ -918,7 +918,7 @@ export default function Home() {
             disabled={ui.active || ui.won || ui.lost}
           >
             <span>{ui.wave === 0 ? "启动敌袭" : ui.wave >= FINAL_WAVE ? "任务完成" : "下一波"}</span>
-            <b>{ui.wave < FINAL_WAVE ? `WAVE ${ui.wave + 1}` : "CLEAR"}</b>
+            <b>{ui.wave < FINAL_WAVE ? `第 ${ui.wave + 1} 波` : "已清除"}</b>
           </button>
         </div>
       </section>
@@ -927,7 +927,7 @@ export default function Home() {
         <section className="arenaPanel">
           <div className="arenaHeader">
             <div>
-              <span>SECTOR MAP</span>
+              <span>区域地图</span>
               <b>河岸数据港</b>
             </div>
             <p>点击空地部署 · 点击塔查看详情</p>
@@ -955,7 +955,7 @@ export default function Home() {
             )}
             {(ui.won || ui.lost) && (
               <div className="resultOverlay">
-                <p>{ui.won ? "SECTOR SECURED" : "CORE BREACHED"}</p>
+                <p>{ui.won ? "区域已保卫" : "核心已失守"}</p>
                 <h2>{ui.won ? "黎明已至" : "防线失守"}</h2>
                 <span>
                   {ui.won
@@ -977,7 +977,7 @@ export default function Home() {
         <aside className="sidebar">
           <div className="sidebarTitle">
             <div>
-              <span>DEFENSE ARRAY</span>
+              <span>防御阵列</span>
               <h2>防御单元</h2>
             </div>
             <b>{gameRef.current.towers.length.toString().padStart(2, "0")}</b>
@@ -1016,8 +1016,8 @@ export default function Home() {
                     {selectedSpec.glyph}
                   </span>
                   <div>
-                    <small>SELECTED UNIT</small>
-                    <h3>{selectedSpec.name} <em>Lv.{selectedTower.level}</em></h3>
+                    <small>已选单元</small>
+                    <h3>{selectedSpec.name} <em>{selectedTower.level} 级</em></h3>
                   </div>
                 </div>
                 <div className="metrics">
@@ -1055,7 +1055,7 @@ export default function Home() {
       </div>
 
       <footer className="siteFooter">
-        <span>NIGHT GRID DEFENSE PROTOCOL</span>
+        <span>夜幕网格防御协议</span>
         <p>守住核心，撑过 {FINAL_WAVE} 波敌袭。</p>
         <button onClick={resetGame}>重置战局 ↻</button>
       </footer>
