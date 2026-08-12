@@ -158,7 +158,7 @@ const LEVELS: LevelConfig[] = [
     sector: "第 07 区",
     description: "标准折线路线，适合熟悉三类防御塔。",
     difficulty: "普通",
-    accent: "#54f1ff",
+    accent: "#8fdde3",
     path: pointList([[-40, 150], [160, 150], [160, 310], [400, 310], [400, 150], [640, 150], [640, 470], [800, 470], [800, 310], [1000, 310]]),
     pads: padList([["A1", 80, 70], ["A2", 80, 230], ["B1", 240, 230], ["B2", 320, 230], ["B3", 320, 390], ["C1", 480, 70], ["C2", 480, 230], ["C3", 560, 230], ["D1", 720, 230], ["D2", 560, 390], ["D3", 720, 390], ["D4", 720, 550], ["E1", 880, 230], ["E2", 880, 390]]),
     rules: makeRules({ finalWave: 6, initialGold: 250, enemyHealth: 0.92, enemySpeed: 0.96, waveBonus: 1.12 }),
@@ -169,7 +169,7 @@ const LEVELS: LevelConfig[] = [
     sector: "第 12 区",
     description: "两次深入折返，弯道火力覆盖尤其重要。",
     difficulty: "普通+",
-    accent: "#7ed8ff",
+    accent: "#91c9e6",
     path: pointList([[-40, 150], [240, 150], [240, 470], [480, 470], [480, 230], [720, 230], [720, 470], [1000, 470]]),
     pads: padList([["A1", 80, 70], ["A2", 160, 230], ["B1", 320, 230], ["B2", 160, 390], ["B3", 320, 390], ["C1", 400, 550], ["C2", 560, 390], ["C3", 560, 150], ["D1", 640, 310], ["D2", 800, 310], ["D3", 800, 390], ["E1", 880, 550]]),
     rules: makeRules({ finalWave: 7, initialGold: 240, enemyHealth: 0.98, enemyCount: 1.04, waveBonus: 1.05 }),
@@ -180,7 +180,7 @@ const LEVELS: LevelConfig[] = [
     sector: "第 18 区",
     description: "敌人反复穿越中央区域，部署位竞争激烈。",
     difficulty: "进阶",
-    accent: "#a98bff",
+    accent: "#b4a4dd",
     path: pointList([[-40, 310], [160, 310], [160, 150], [400, 150], [400, 470], [640, 470], [640, 230], [800, 230], [800, 390], [1000, 390]]),
     pads: padList([["A1", 80, 230], ["A2", 240, 230], ["B1", 320, 70], ["B2", 320, 310], ["B3", 480, 230], ["B4", 480, 390], ["C1", 560, 550], ["C2", 720, 550], ["C3", 560, 310], ["D1", 720, 150], ["D2", 880, 310], ["D3", 880, 470]]),
     rules: makeRules({ finalWave: 8, initialGold: 230, enemyHealth: 1.05, enemySpeed: 1.03, enemyCount: 1.08 }),
@@ -191,7 +191,7 @@ const LEVELS: LevelConfig[] = [
     sector: "第 23 区",
     description: "长距离纵向推进，重装单位将更频繁出现。",
     difficulty: "困难",
-    accent: "#ffb648",
+    accent: "#e4bd84",
     path: pointList([[-40, 470], [160, 470], [160, 230], [400, 230], [400, 70], [640, 70], [640, 310], [880, 310], [880, 150], [1000, 150]]),
     pads: padList([["A1", 80, 390], ["A2", 240, 390], ["B1", 80, 230], ["B2", 240, 150], ["B3", 320, 310], ["C1", 480, 150], ["C2", 560, 150], ["C3", 720, 150], ["D1", 560, 310], ["D2", 720, 390], ["D3", 800, 230], ["E1", 960, 230]]),
     rules: makeRules({ finalWave: 9, initialGold: 215, lives: 10, enemyHealth: 1.12, enemySpeed: 1.06, enemyCount: 1.12, tankWave: 2, waveBonus: 0.94 }),
@@ -202,7 +202,7 @@ const LEVELS: LevelConfig[] = [
     sector: "第 31 区",
     description: "长直线与急弯交替，疾行单位会成群来袭。",
     difficulty: "专家",
-    accent: "#ff79c9",
+    accent: "#dda0c2",
     path: pointList([[-40, 150], [240, 150], [240, 310], [480, 310], [480, 470], [720, 470], [720, 150], [1000, 150]]),
     pads: padList([["A1", 80, 70], ["A2", 160, 230], ["B1", 320, 230], ["B2", 400, 390], ["C1", 560, 390], ["C2", 640, 550], ["C3", 800, 550], ["D1", 640, 310], ["D2", 800, 310], ["E1", 800, 70], ["E2", 880, 230]]),
     rules: makeRules({ finalWave: 10, initialGold: 205, lives: 9, enemyHealth: 1.2, enemySpeed: 1.1, enemyCount: 1.16, spawnRate: 0.9, runnerWave: 1, tankWave: 2, waveBonus: 0.88 }),
@@ -213,7 +213,7 @@ const LEVELS: LevelConfig[] = [
     sector: "第 42 区",
     description: "最终防区。资源紧缺，混合敌群持续施压。",
     difficulty: "噩梦",
-    accent: "#ff675e",
+    accent: "#df918e",
     path: pointList([[-40, 310], [160, 310], [160, 70], [400, 70], [400, 230], [640, 230], [640, 470], [880, 470], [880, 310], [1000, 310]]),
     pads: padList([["A1", 80, 230], ["A2", 240, 150], ["B1", 320, 150], ["B2", 480, 150], ["C1", 560, 310], ["C2", 720, 310], ["C3", 560, 390], ["D1", 720, 550], ["D2", 800, 390], ["E1", 960, 390]]),
     rules: makeRules({ finalWave: 12, initialGold: 195, lives: 8, enemyHealth: 1.3, enemySpeed: 1.14, enemyCount: 1.22, spawnRate: 0.84, runnerWave: 1, tankWave: 2, waveBonus: 0.8 }),
@@ -227,7 +227,7 @@ const MODES: ModeConfig[] = [
     badge: "无尽",
     description: "没有最终波次，敌人会持续变强。挑战你的最高分。",
     levelId: 3,
-    accent: "#61f5a8",
+    accent: "#8bcaae",
     rules: makeRules({ finalWave: null, initialGold: 245, enemyCount: 1.08, spawnRate: 0.9, waveBonus: 0.95 }),
   },
   {
@@ -236,7 +236,7 @@ const MODES: ModeConfig[] = [
     badge: "极速",
     description: "六波高密度快攻。资源充足，但思考时间很少。",
     levelId: 2,
-    accent: "#54f1ff",
+    accent: "#8fdde3",
     rules: makeRules({ finalWave: 6, initialGold: 310, lives: 8, enemyHealth: 0.96, enemySpeed: 1.3, enemyCount: 1.2, spawnRate: 0.58, waveBonus: 0.9, runnerWave: 1, tankWave: 2 }),
   },
   {
@@ -245,7 +245,7 @@ const MODES: ModeConfig[] = [
     badge: "3 核心",
     description: "只有三点核心耐久，敌人更强，补给更少。",
     levelId: 6,
-    accent: "#ff5470",
+    accent: "#dd8b9e",
     rules: makeRules({ finalWave: 10, initialGold: 190, lives: 3, enemyHealth: 1.38, enemySpeed: 1.14, enemyCount: 1.25, spawnRate: 0.82, waveBonus: 0.68, runnerWave: 1, tankWave: 2 }),
   },
 ];
@@ -274,7 +274,7 @@ const TOWERS: Record<
     damage: 20,
     rate: 0.62,
     projectileSpeed: 520,
-    color: "#54f1ff",
+    color: "#8fdde3",
     slow: 0,
   },
   frost: {
@@ -286,7 +286,7 @@ const TOWERS: Record<
     damage: 10,
     rate: 0.88,
     projectileSpeed: 410,
-    color: "#a98bff",
+    color: "#b4a4dd",
     slow: 0.58,
   },
   rail: {
@@ -298,7 +298,7 @@ const TOWERS: Record<
     damage: 78,
     rate: 1.92,
     projectileSpeed: 760,
-    color: "#ffb648",
+    color: "#e4bd84",
     slow: 0,
   },
 };
@@ -641,7 +641,7 @@ export default function Home() {
           if (!target) {
             enemy.dead = true;
             game.lives -= enemy.kind === "tank" ? 2 : 1;
-            burst(enemy.x, enemy.y, "#ff5470", 12);
+            burst(enemy.x, enemy.y, "#dd8b9e", 12);
             if (game.lives <= 0) {
               game.lives = 0;
               game.lost = true;
@@ -762,21 +762,21 @@ export default function Home() {
         path.slice(1).forEach((point) => ctx.lineTo(point.x, point.y));
       };
       trace();
-      ctx.strokeStyle = "rgba(57, 231, 255, .18)";
+      ctx.strokeStyle = "rgba(143, 221, 227, .15)";
       ctx.lineWidth = 86;
       ctx.stroke();
       trace();
-      ctx.strokeStyle = "#111b32";
+      ctx.strokeStyle = "#202c45";
       ctx.lineWidth = 74;
       ctx.stroke();
       trace();
-      ctx.strokeStyle = "#223352";
+      ctx.strokeStyle = "#34445f";
       ctx.lineWidth = 62;
       ctx.stroke();
       trace();
       ctx.setLineDash([7, 15]);
       ctx.lineDashOffset = -game.elapsed * 26;
-      ctx.strokeStyle = "rgba(148, 184, 221, .28)";
+      ctx.strokeStyle = "rgba(184, 201, 225, .32)";
       ctx.lineWidth = 2;
       ctx.stroke();
       ctx.restore();
@@ -803,7 +803,7 @@ export default function Home() {
       ctx.shadowBlur = selected ? 20 : 8;
       ctx.beginPath();
       ctx.arc(0, 0, 23, 0, Math.PI * 2);
-      ctx.fillStyle = "#0b1224";
+      ctx.fillStyle = "#172239";
       ctx.fill();
       ctx.lineWidth = 3;
       ctx.strokeStyle = spec.color;
@@ -812,7 +812,7 @@ export default function Home() {
       ctx.rotate(tower.angle);
       if (tower.kind === "rail") {
         roundedRect(ctx, -5, -7, 35, 14, 5);
-        ctx.fillStyle = "#1d2941";
+        ctx.fillStyle = "#2b3954";
         ctx.fill();
         ctx.fillStyle = spec.color;
         ctx.fillRect(12, -3, 22, 6);
@@ -847,26 +847,26 @@ export default function Home() {
 
     const drawEnemy = (enemy: Enemy) => {
       const color =
-        enemy.kind === "runner" ? "#ff79c9" : enemy.kind === "tank" ? "#ff675e" : "#e9f0ff";
+        enemy.kind === "runner" ? "#dda0c2" : enemy.kind === "tank" ? "#df918e" : "#e5ebf5";
       const slowed = enemy.slowUntil > gameRef.current.elapsed;
       ctx.save();
       ctx.translate(enemy.x, enemy.y);
-      ctx.shadowColor = slowed ? "#a98bff" : color;
+      ctx.shadowColor = slowed ? "#b4a4dd" : color;
       ctx.shadowBlur = 10;
-      ctx.fillStyle = slowed ? "#bcaaff" : color;
+      ctx.fillStyle = slowed ? "#c3b7e4" : color;
       if (enemy.kind === "runner") {
         ctx.rotate(Math.PI / 4);
         ctx.fillRect(-10, -10, 20, 20);
       } else if (enemy.kind === "tank") {
         roundedRect(ctx, -18, -15, 36, 30, 8);
         ctx.fill();
-        ctx.fillStyle = "#421d2a";
+        ctx.fillStyle = "#604050";
         ctx.fillRect(-9, -4, 18, 8);
       } else {
         ctx.beginPath();
         ctx.arc(0, 0, 14, 0, Math.PI * 2);
         ctx.fill();
-        ctx.fillStyle = "#26334d";
+        ctx.fillStyle = "#46536b";
         ctx.beginPath();
         ctx.arc(0, 0, 6, 0, Math.PI * 2);
         ctx.fill();
@@ -876,11 +876,11 @@ export default function Home() {
       const barWidth = enemy.kind === "tank" ? 38 : 30;
       const barY = enemy.y - enemy.radius - 11;
       roundedRect(ctx, enemy.x - barWidth / 2, barY, barWidth, 4, 2);
-      ctx.fillStyle = "rgba(5, 8, 18, .9)";
+      ctx.fillStyle = "rgba(17, 24, 42, .88)";
       ctx.fill();
       const health = Math.max(0, enemy.hp / enemy.maxHp);
       roundedRect(ctx, enemy.x - barWidth / 2, barY, barWidth * health, 4, 2);
-      ctx.fillStyle = health < 0.35 ? "#ff5470" : "#61f5a8";
+      ctx.fillStyle = health < 0.35 ? "#dd8b9e" : "#8bcaae";
       ctx.fill();
     };
 
@@ -890,14 +890,14 @@ export default function Home() {
       const entranceY = path[0].y;
       const coreY = path[path.length - 1].y;
       const gradient = ctx.createLinearGradient(0, 0, WIDTH, HEIGHT);
-      gradient.addColorStop(0, "#080d1e");
-      gradient.addColorStop(0.55, "#0c1428");
-      gradient.addColorStop(1, "#07101d");
+      gradient.addColorStop(0, "#141d32");
+      gradient.addColorStop(0.55, "#1a263e");
+      gradient.addColorStop(1, "#132137");
       ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
       ctx.save();
-      ctx.strokeStyle = "rgba(130, 170, 220, .055)";
+      ctx.strokeStyle = "rgba(174, 194, 224, .075)";
       ctx.lineWidth = 1;
       for (let x = 0; x <= WIDTH; x += 80) {
         ctx.beginPath();
@@ -919,13 +919,13 @@ export default function Home() {
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.font = '800 18px "Microsoft YaHei UI", "PingFang SC", sans-serif';
-      ctx.fillStyle = "#54f1ff";
+      ctx.fillStyle = "#8fdde3";
       ctx.fillText("入口", 30, entranceY - 42);
-      ctx.fillStyle = "#ff5470";
+      ctx.fillStyle = "#dd8b9e";
       ctx.fillText("核心", 925, coreY - 42);
       ctx.beginPath();
       ctx.arc(925, coreY, 23 + Math.sin(game.elapsed * 3) * 3, 0, Math.PI * 2);
-      ctx.strokeStyle = "rgba(255, 84, 112, .7)";
+      ctx.strokeStyle = "rgba(221, 139, 158, .74)";
       ctx.lineWidth = 3;
       ctx.stroke();
       ctx.restore();
@@ -944,26 +944,26 @@ export default function Home() {
           PAD_SIZE,
           10,
         );
-        ctx.fillStyle = valid ? `${spec.color}28` : "rgba(255, 84, 112, .2)";
+        ctx.fillStyle = valid ? `${spec.color}28` : "rgba(221, 139, 158, .2)";
         ctx.fill();
         ctx.lineWidth = 2;
-        ctx.strokeStyle = valid ? spec.color : "#ff5470";
+        ctx.strokeStyle = valid ? spec.color : "#dd8b9e";
         ctx.stroke();
         ctx.globalAlpha = 0.68;
         ctx.beginPath();
         ctx.arc(hover.x, hover.y, spec.range, 0, Math.PI * 2);
-        ctx.fillStyle = valid ? `${spec.color}0d` : "rgba(255, 84, 112, .08)";
+        ctx.fillStyle = valid ? `${spec.color}0d` : "rgba(221, 139, 158, .08)";
         ctx.fill();
         ctx.setLineDash([6, 7]);
-        ctx.strokeStyle = valid ? spec.color : "#ff5470";
+        ctx.strokeStyle = valid ? spec.color : "#dd8b9e";
         ctx.stroke();
         ctx.setLineDash([]);
         ctx.beginPath();
         ctx.arc(hover.x, hover.y, 21, 0, Math.PI * 2);
-        ctx.fillStyle = valid ? "#13273b" : "#321422";
+        ctx.fillStyle = valid ? "#26374f" : "#49303f";
         ctx.fill();
         ctx.lineWidth = 2;
-        ctx.strokeStyle = valid ? spec.color : "#ff5470";
+        ctx.strokeStyle = valid ? spec.color : "#dd8b9e";
         ctx.stroke();
         ctx.restore();
       }
@@ -992,7 +992,7 @@ export default function Home() {
       }
 
       if (game.paused) {
-        ctx.fillStyle = "rgba(4, 8, 18, .55)";
+        ctx.fillStyle = "rgba(13, 19, 35, .58)";
         ctx.fillRect(0, 0, WIDTH, HEIGHT);
         ctx.textAlign = "center";
         ctx.fillStyle = "#f6f8ff";
