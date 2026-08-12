@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 const WIDTH = 960;
 const HEIGHT = 620;
 const PAD_SIZE = 46;
+const GUEST_SAVE_KEY = "neon-grid-defense:guest-save:v1";
 
 type Point = { x: number; y: number };
 type TowerKind = "pulse" | "frost" | "rail";
@@ -51,6 +52,29 @@ type ActiveMission = {
   title: string;
   level: LevelConfig;
   rules: RuleSet;
+};
+
+type GuestRecord = {
+  bestScore: number;
+  bestWave: number;
+  wins: number;
+  plays: number;
+};
+
+type GuestSession = {
+  category: string;
+  title: string;
+  levelId: number;
+  rules: RuleSet;
+  game: Game;
+  savedAt: number;
+};
+
+type GuestSave = {
+  version: 1;
+  updatedAt: number;
+  records: Record<string, GuestRecord>;
+  session: GuestSession | null;
 };
 
 type Enemy = Point & {
@@ -325,6 +349,41 @@ const createGame = (rules: RuleSet): Game => ({
   nextId: 1,
 });
 
+const createEmptyGuestSave = (): GuestSave => ({
+  version: 1,
+  updatedAt: 0,
+  records: {},
+  session: null,
+});
+
+const parseGuestSave = (raw: string | null): GuestSave => {
+  if (!raw) return createEmptyGuestSave();
+  try {
+    const candidate = JSON.parse(raw) as Partial<GuestSave>;
+    if (candidate.version !== 1 || !candidate.records || typeof candidate.records !== "object") {
+      return createEmptyGuestSave();
+    }
+    const session = candidate.session;
+    const validSession =
+      session &&
+      typeof session.levelId === "number" &&
+      typeof session.title === "string" &&
+      typeof session.category === "string" &&
+      session.rules &&
+      session.game &&
+      Array.isArray(session.game.enemies) &&
+      Array.isArray(session.game.towers);
+    return {
+      version: 1,
+      updatedAt: typeof candidate.updatedAt === "number" ? candidate.updatedAt : 0,
+      records: candidate.records,
+      session: validSession ? session : null,
+    };
+  } catch {
+    return createEmptyGuestSave();
+  }
+};
+
 const toUi = (game: Game, version = 0): UiState => ({
   gold: game.gold,
   lives: game.lives,
@@ -364,6 +423,9 @@ export default function Home() {
   const selectedTowerRef = useRef<number | null>(null);
   const hoverRef = useRef<Point | null>(null);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const guestSaveRef = useRef<GuestSave>(createEmptyGuestSave());
+  const saveReadyRef = useRef(false);
+  const resultRecordedRef = useRef(false);
   const [screen, setScreen] = useState<Screen>("home");
   const [activeMission, setActiveMission] = useState<ActiveMission>({
     category: "战役模式",
@@ -375,9 +437,54 @@ export default function Home() {
   const [selectedTowerId, setSelectedTowerId] = useState<number | null>(null);
   const [toast, setToast] = useState("先部署防御塔，再启动敌袭");
   const [ui, setUi] = useState<UiState>(() => toUi(gameRef.current));
+  const [guestSave, setGuestSave] = useState<GuestSave>(() => createEmptyGuestSave());
+  const [saveStatus, setSaveStatus] = useState<"loading" | "ready" | "unavailable">("loading");
 
   const syncUi = () =>
     setUi((previous) => toUi(gameRef.current, previous.version + 1));
+
+  const writeGuestSave = (next: GuestSave, refreshUi = true) => {
+    if (!saveReadyRef.current) return;
+    guestSaveRef.current = next;
+    if (refreshUi) setGuestSave(next);
+    try {
+      window.localStorage.setItem(GUEST_SAVE_KEY, JSON.stringify(next));
+      setSaveStatus("ready");
+    } catch {
+      setSaveStatus("unavailable");
+    }
+  };
+
+  const saveCurrentSession = (refreshUi = true) => {
+    const game = gameRef.current;
+    const now = Date.now();
+    const session: GuestSession | null =
+      game.won || game.lost
+        ? null
+        : {
+            category: activeMission.category,
+            title: activeMission.title,
+            levelId: activeMission.level.id,
+            rules: activeRulesRef.current,
+            game: {
+              ...game,
+              enemies: game.enemies.map((enemy) => ({ ...enemy })),
+              towers: game.towers.map((tower) => ({ ...tower })),
+              paused: game.active ? true : game.paused,
+              projectiles: [],
+              particles: [],
+            },
+            savedAt: now,
+          };
+    writeGuestSave(
+      {
+        ...guestSaveRef.current,
+        updatedAt: now,
+        session,
+      },
+      refreshUi,
+    );
+  };
 
   const startMission = (
     level: LevelConfig,
@@ -388,6 +495,7 @@ export default function Home() {
     activeLevelRef.current = level;
     activeRulesRef.current = rules;
     gameRef.current = createGame(rules);
+    resultRecordedRef.current = false;
     hoverRef.current = null;
     selectedKindRef.current = "pulse";
     selectedTowerRef.current = null;
@@ -401,7 +509,44 @@ export default function Home() {
 
   const returnToLobby = () => {
     gameRef.current.paused = true;
+    saveCurrentSession();
     setScreen("home");
+  };
+
+  const resumeGuestSession = () => {
+    const session = guestSaveRef.current.session;
+    if (!session) return;
+    const level = LEVELS.find((item) => item.id === session.levelId);
+    if (!level) {
+      writeGuestSave({ ...guestSaveRef.current, session: null, updatedAt: Date.now() });
+      return;
+    }
+    const restoredGame: Game = {
+      ...session.game,
+      enemies: session.game.enemies.map((enemy) => ({ ...enemy })),
+      towers: session.game.towers.map((tower) => ({ ...tower })),
+      paused: session.game.active ? true : session.game.paused,
+      projectiles: [],
+      particles: [],
+    };
+    activeLevelRef.current = level;
+    activeRulesRef.current = session.rules;
+    gameRef.current = restoredGame;
+    resultRecordedRef.current = false;
+    hoverRef.current = null;
+    selectedKindRef.current = "pulse";
+    selectedTowerRef.current = null;
+    setSelectedKind("pulse");
+    setSelectedTowerId(null);
+    setActiveMission({
+      category: session.category,
+      title: session.title,
+      level,
+      rules: session.rules,
+    });
+    setUi(toUi(restoredGame));
+    setToast(restoredGame.active ? "本机存档已恢复，按空格键继续" : "本机存档已恢复");
+    setScreen("game");
   };
 
   const showToast = (message: string) => {
@@ -500,6 +645,7 @@ export default function Home() {
 
   const resetGame = () => {
     gameRef.current = createGame(activeRulesRef.current);
+    resultRecordedRef.current = false;
     hoverRef.current = null;
     chooseTower("pulse");
     syncUi();
@@ -1032,6 +1178,67 @@ export default function Home() {
     window.scrollTo({ top: 0, behavior: "auto" });
   }, [screen]);
 
+  useEffect(() => {
+    try {
+      const loaded = parseGuestSave(window.localStorage.getItem(GUEST_SAVE_KEY));
+      guestSaveRef.current = loaded;
+      saveReadyRef.current = true;
+      setGuestSave(loaded);
+      setSaveStatus("ready");
+    } catch {
+      saveReadyRef.current = true;
+      setSaveStatus("unavailable");
+    }
+  }, []);
+
+  useEffect(() => {
+    if (screen !== "game") return;
+    saveCurrentSession();
+    const interval = window.setInterval(() => saveCurrentSession(false), 1600);
+    const handlePageHide = () => saveCurrentSession(false);
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") saveCurrentSession(false);
+    };
+    window.addEventListener("pagehide", handlePageHide);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener("pagehide", handlePageHide);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [screen, activeMission]);
+
+  useEffect(() => {
+    if (
+      screen !== "game" ||
+      (!ui.won && !ui.lost) ||
+      resultRecordedRef.current
+    ) return;
+    resultRecordedRef.current = true;
+    const key = `${activeMission.category}:${activeMission.title}`;
+    const previous = guestSaveRef.current.records[key] ?? {
+      bestScore: 0,
+      bestWave: 0,
+      wins: 0,
+      plays: 0,
+    };
+    const now = Date.now();
+    writeGuestSave({
+      ...guestSaveRef.current,
+      updatedAt: now,
+      session: null,
+      records: {
+        ...guestSaveRef.current.records,
+        [key]: {
+          bestScore: Math.max(previous.bestScore, ui.score),
+          bestWave: Math.max(previous.bestWave, ui.wave),
+          wins: previous.wins + (ui.won ? 1 : 0),
+          plays: previous.plays + 1,
+        },
+      },
+    });
+  }, [screen, ui.won, ui.lost, ui.score, ui.wave, activeMission]);
+
   const remaining = ui.enemies + ui.spawnRemaining;
   const selectedSpec = selectedTower ? TOWERS[selectedTower.kind] : null;
   const upgradeCost = selectedTower
@@ -1039,6 +1246,12 @@ export default function Home() {
     : 0;
 
   const finalWave = activeRulesRef.current.finalWave;
+  const localRecordCount = Object.keys(guestSave.records).length;
+  const localBestScore = Object.values(guestSave.records).reduce(
+    (best, record) => Math.max(best, record.bestScore),
+    0,
+  );
+  const savedSession = guestSave.session;
 
   if (screen !== "game") {
     return (
@@ -1053,7 +1266,10 @@ export default function Home() {
             <button className={screen === "campaign" ? "active" : ""} onClick={() => setScreen("campaign")}>战役</button>
             <button className={screen === "modes" ? "active" : ""} onClick={() => setScreen("modes")}>特殊模式</button>
           </nav>
-          <span className="onlineStatus"><i /> 防线在线</span>
+          <span className={`onlineStatus guestModeStatus ${saveStatus}`}>
+            <i />
+            {saveStatus === "unavailable" ? "本机存档不可用" : "游客模式 · 本机存档"}
+          </span>
         </header>
 
         {screen === "home" && (
@@ -1063,6 +1279,15 @@ export default function Home() {
                 <p className="heroKicker"><span>新任务已解锁</span> / 指挥官终端</p>
                 <h1>选择你的防线，<br /><em>守住最后的核心。</em></h1>
                 <p className="heroLead">六个战区、三种特殊协议。观察敌军路线，在有限部署点建立你的霓虹防线。</p>
+                {savedSession && (
+                  <button className="continueMenuButton" onClick={resumeGuestSession}>
+                    <span>
+                      <small>本机战局</small>
+                      <strong>继续 {savedSession.title}</strong>
+                    </span>
+                    <b>第 {savedSession.game.wave} 波 · {savedSession.game.score.toLocaleString()} 分 →</b>
+                  </button>
+                )}
                 <div className="menuActions">
                   <button className="primaryMenuButton" onClick={() => setScreen("campaign")}>
                     <span>开始战役</span><b>选择战区 →</b>
@@ -1071,6 +1296,9 @@ export default function Home() {
                     特殊模式
                   </button>
                 </div>
+                <p className="localSaveNote">
+                  <i /> 游客进度自动保存在当前设备；换设备或清理浏览器数据后无法恢复。
+                </p>
               </div>
               <div className="heroRadar" aria-hidden="true">
                 <div className="radarRing ringOne" />
@@ -1082,7 +1310,13 @@ export default function Home() {
             <section className="menuSummary" aria-label="游戏内容概览">
               <article><strong>06</strong><span><b>战役关卡</b><small>从数据港到核心迷城</small></span></article>
               <article><strong>03</strong><span><b>特殊模式</b><small>生存、闪电与硬核挑战</small></span></article>
-              <article><strong>03</strong><span><b>防御单位</b><small>自由组合与三级强化</small></span></article>
+              <article>
+                <strong>{localRecordCount.toString().padStart(2, "0")}</strong>
+                <span>
+                  <b>本机记录</b>
+                  <small>{localBestScore > 0 ? `最高 ${localBestScore.toLocaleString()} 分` : "完成战局后自动记录"}</small>
+                </span>
+              </article>
             </section>
           </>
         )}
@@ -1143,7 +1377,7 @@ export default function Home() {
           </section>
         )}
 
-        <footer className="menuFooter"><span>NEON GRID DEFENSE // BUILD 02.6</span><span>本地战术模拟已就绪</span></footer>
+        <footer className="menuFooter"><span>NEON GRID DEFENSE // BUILD 02.7</span><span>游客档案仅保存在当前设备</span></footer>
       </main>
     );
   }
@@ -1393,7 +1627,7 @@ export default function Home() {
       </div>
 
       <footer className="siteFooter">
-        <span>夜幕网格防御协议</span>
+        <span>{saveStatus === "unavailable" ? "游客模式 · 存档不可用" : "游客模式 · 本机自动存档"}</span>
         <p>{finalWave === null ? "守住核心，挑战尽可能多的敌袭。" : `守住核心，撑过 ${finalWave} 波敌袭。`}</p>
         <button onClick={resetGame}>重置战局 ↻</button>
       </footer>

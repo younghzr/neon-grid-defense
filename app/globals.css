@@ -1772,6 +1772,99 @@ canvas:focus-visible {
   color: #7d899e;
 }
 
+.guestModeStatus {
+  padding: 8px 12px;
+  border: 1px solid rgba(139, 202, 174, 0.2);
+  border-radius: 999px;
+  background: rgba(139, 202, 174, 0.055);
+}
+
+.guestModeStatus.loading {
+  opacity: 0.68;
+}
+
+.guestModeStatus.unavailable {
+  border-color: rgba(221, 139, 158, 0.24);
+  background: rgba(221, 139, 158, 0.07);
+  color: #c6a1ad;
+}
+
+.guestModeStatus.unavailable i {
+  background: var(--red);
+}
+
+.continueMenuButton {
+  display: flex;
+  width: min(100%, 512px);
+  min-height: 74px;
+  margin: 0 0 14px;
+  padding: 13px 16px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  border: 1px solid rgba(139, 202, 174, 0.3);
+  border-radius: 15px;
+  background:
+    linear-gradient(135deg, rgba(75, 123, 110, 0.3), rgba(70, 70, 112, 0.25)),
+    rgba(27, 38, 61, 0.58);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 12px 28px rgba(7, 12, 26, 0.12);
+  cursor: pointer;
+  text-align: left;
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+}
+
+.continueMenuButton:hover {
+  transform: translateY(-2px);
+  border-color: rgba(139, 202, 174, 0.58);
+  background:
+    linear-gradient(135deg, rgba(83, 139, 123, 0.38), rgba(80, 77, 127, 0.32)),
+    rgba(31, 43, 68, 0.7);
+}
+
+.continueMenuButton span,
+.continueMenuButton small,
+.continueMenuButton strong {
+  display: block;
+}
+
+.continueMenuButton small {
+  margin-bottom: 5px;
+  color: var(--green);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+
+.continueMenuButton strong {
+  color: #f0f4f7;
+  font-size: 16px;
+}
+
+.continueMenuButton > b {
+  color: #b7d9c9;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.localSaveNote {
+  display: flex;
+  margin: 16px 0 0;
+  align-items: center;
+  gap: 8px;
+  color: #8f9caf;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.localSaveNote i {
+  flex: 0 0 auto;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 8px rgba(139, 202, 174, 0.42);
+}
+
 @media (max-width: 1080px) {
   .menuShell {
     width: min(100% - 32px, 940px);
@@ -1857,6 +1950,16 @@ canvas:focus-visible {
   }
 
   .menuHero h1 em {
+    white-space: normal;
+  }
+
+  .continueMenuButton {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .continueMenuButton > b {
     white-space: normal;
   }
 
