@@ -6,6 +6,7 @@ const WIDTH = 960;
 const HEIGHT = 620;
 const PAD_SIZE = 46;
 const GUEST_SAVE_KEY = "neon-grid-defense:guest-save:v1";
+const AUTO_WAVE_DELAY = 3;
 
 type Point = { x: number; y: number };
 type TowerKind = "pulse" | "frost" | "rail";
@@ -130,6 +131,8 @@ type Game = {
   wave: number;
   active: boolean;
   paused: boolean;
+  autoWave: boolean;
+  autoWaveTimer: number;
   speed: 1 | 2;
   won: boolean;
   lost: boolean;
@@ -149,6 +152,8 @@ type UiState = Pick<
   | "wave"
   | "active"
   | "paused"
+  | "autoWave"
+  | "autoWaveTimer"
   | "speed"
   | "won"
   | "lost"
@@ -335,6 +340,8 @@ const createGame = (rules: RuleSet): Game => ({
   wave: 0,
   active: false,
   paused: false,
+  autoWave: false,
+  autoWaveTimer: 0,
   speed: 1,
   won: false,
   lost: false,
@@ -388,6 +395,8 @@ const toUi = (game: Game, version = 0): UiState => ({
   wave: game.wave,
   active: game.active,
   paused: game.paused,
+  autoWave: game.autoWave,
+  autoWaveTimer: game.autoWaveTimer,
   speed: game.speed,
   won: game.won,
   lost: game.lost,
@@ -545,7 +554,12 @@ export default function Home() {
       ...session.game,
       enemies: session.game.enemies.map((enemy) => ({ ...enemy })),
       towers: session.game.towers.map((tower) => ({ ...tower })),
-      paused: session.game.active ? true : session.game.paused,
+      paused: session.game.active ? true : false,
+      autoWave: Boolean(session.game.autoWave),
+      autoWaveTimer:
+        Number.isFinite(session.game.autoWaveTimer)
+          ? Math.max(0, session.game.autoWaveTimer)
+          : 0,
       projectiles: [],
       particles: [],
     };
@@ -640,6 +654,7 @@ export default function Home() {
       game.lost ||
       (rules.finalWave !== null && game.wave >= rules.finalWave)
     ) return;
+    game.autoWaveTimer = 0;
     game.wave += 1;
     game.active = true;
     game.paused = false;
@@ -649,6 +664,31 @@ export default function Home() {
     game.spawnTimer = 0.15;
     syncUi();
     showToast(`第 ${game.wave} 波敌袭已侦测`);
+  };
+
+  const toggleAutoWave = () => {
+    const game = gameRef.current;
+    const rules = activeRulesRef.current;
+    if (game.won || game.lost) return;
+    game.autoWave = !game.autoWave;
+
+    if (!game.autoWave) {
+      game.autoWaveTimer = 0;
+      showToast("自动下一波已关闭");
+    } else if (game.active) {
+      game.autoWaveTimer = 0;
+      showToast("自动下一波已开启，本波结束后自动推进");
+    } else if (
+      game.wave > 0 &&
+      (rules.finalWave === null || game.wave < rules.finalWave)
+    ) {
+      game.autoWaveTimer = AUTO_WAVE_DELAY;
+      showToast(`${AUTO_WAVE_DELAY} 秒后自动启动第 ${game.wave + 1} 波`);
+    } else {
+      game.autoWaveTimer = 0;
+      showToast("自动下一波已开启，启动首波后自动推进");
+    }
+    syncUi();
   };
 
   const togglePause = () => {
@@ -712,6 +752,7 @@ export default function Home() {
       if (event.key === "1") chooseTower("pulse");
       if (event.key === "2") chooseTower("frost");
       if (event.key === "3") chooseTower("rail");
+      if (event.key.toLowerCase() === "a" && !event.repeat) toggleAutoWave();
       if (event.code === "Space") {
         event.preventDefault();
         if (gameRef.current.active) togglePause();
@@ -799,12 +840,23 @@ export default function Home() {
       });
     };
 
-    const update = (dt: number) => {
+    const update = (dt: number, realDt: number) => {
       const game = gameRef.current;
       const rules = activeRulesRef.current;
       const path = activeLevelRef.current.path;
       if (game.paused || game.won || game.lost) return;
       game.elapsed += dt;
+
+      if (
+        game.autoWave &&
+        !game.active &&
+        game.wave > 0 &&
+        game.autoWaveTimer > 0 &&
+        (rules.finalWave === null || game.wave < rules.finalWave)
+      ) {
+        game.autoWaveTimer = Math.max(0, game.autoWaveTimer - realDt);
+        if (game.autoWaveTimer === 0) startWave();
+      }
 
       if (game.active && game.spawnRemaining > 0) {
         game.spawnTimer -= dt;
@@ -829,6 +881,7 @@ export default function Home() {
               game.lives = 0;
               game.lost = true;
               game.active = false;
+              game.autoWaveTimer = 0;
               showToast("核心失守——调整布防后再试一次");
             }
             break;
@@ -927,8 +980,14 @@ export default function Home() {
         game.gold += bonus;
         if (rules.finalWave !== null && game.wave >= rules.finalWave) {
           game.won = true;
+          game.autoWaveTimer = 0;
           game.score += game.lives * 400;
           showToast("全部敌袭已清除，黎明属于我们");
+        } else if (game.autoWave) {
+          game.autoWaveTimer = AUTO_WAVE_DELAY;
+          showToast(
+            `第 ${game.wave} 波清除，补给 +${bonus} · ${AUTO_WAVE_DELAY} 秒后自动启动第 ${game.wave + 1} 波`,
+          );
         } else {
           showToast(`第 ${game.wave} 波清除，补给 +${bonus}`);
         }
@@ -1518,7 +1577,7 @@ export default function Home() {
       const rawDelta = Math.min(0.035, (now - previous) / 1000);
       previous = now;
       const game = gameRef.current;
-      update(rawDelta * game.speed);
+      update(rawDelta * game.speed, rawDelta);
       draw();
       uiClock += rawDelta;
       if (uiClock > 0.13) {
@@ -1744,7 +1803,7 @@ export default function Home() {
           </section>
         )}
 
-        <footer className="menuFooter"><span>NEON GRID DEFENSE // BUILD 03.0</span><span>游客档案仅保存在当前设备</span></footer>
+        <footer className="menuFooter"><span>NEON GRID DEFENSE // BUILD 03.1</span><span>游客档案仅保存在当前设备</span></footer>
       </main>
     );
   }
@@ -1794,9 +1853,11 @@ export default function Home() {
                   ? "核心离线"
                   : ui.active
                     ? `剩余目标 ${remaining}`
-                    : ui.wave === 0
-                      ? "等待首次部署"
-                      : "波次间歇"}
+                    : ui.autoWaveTimer > 0
+                      ? `自动推进 · ${Math.ceil(ui.autoWaveTimer)} 秒`
+                      : ui.wave === 0
+                        ? "等待首次部署"
+                        : "波次间歇"}
             </strong>
           </div>
         </div>
@@ -1811,6 +1872,23 @@ export default function Home() {
           </button>
           <button className="speedButton" onClick={toggleSpeed} aria-label="切换游戏速度">
             ×{ui.speed}
+          </button>
+          <button
+            className={`autoWaveButton ${ui.autoWave ? "active" : ""}`}
+            onClick={toggleAutoWave}
+            disabled={ui.won || ui.lost}
+            aria-label={ui.autoWave ? "关闭自动下一波" : "开启自动下一波"}
+            aria-pressed={ui.autoWave}
+            title="自动下一波（快捷键 A）"
+          >
+            <span>自动</span>
+            <b>
+              {ui.autoWaveTimer > 0
+                ? `${Math.ceil(ui.autoWaveTimer)}s`
+                : ui.autoWave
+                  ? "开"
+                  : "关"}
+            </b>
           </button>
           <button
             className="waveButton"
@@ -1907,7 +1985,7 @@ export default function Home() {
             <span><i className="legendDot standard" />巡航体</span>
             <span><i className="legendDot runner" />疾行体</span>
             <span><i className="legendDot tank" />重装体</span>
-            <em>空格键：开始 / 暂停</em>
+            <em>空格：开始 / 暂停 · A：自动波次</em>
           </div>
         </section>
 
