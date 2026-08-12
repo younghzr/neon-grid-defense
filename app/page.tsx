@@ -177,7 +177,7 @@ const createGame = (): Game => ({
   towers: [],
   projectiles: [],
   particles: [],
-  gold: 260,
+  gold: 230,
   lives: 12,
   score: 0,
   wave: 0,
@@ -307,7 +307,7 @@ export default function Home() {
     game.wave += 1;
     game.active = true;
     game.paused = false;
-    game.spawnTotal = 7 + game.wave * 2;
+    game.spawnTotal = 8 + game.wave * 2;
     game.spawnRemaining = game.spawnTotal;
     game.spawnSerial = 0;
     game.spawnTimer = 0.15;
@@ -416,9 +416,9 @@ export default function Home() {
       const game = gameRef.current;
       const serial = game.spawnSerial++;
       let kind: EnemyKind = "drone";
-      if (game.wave >= 3 && serial % 5 === 3) kind = "runner";
-      if (game.wave >= 4 && serial % 7 === 6) kind = "tank";
-      const scale = 1 + (game.wave - 1) * 0.27;
+      if (game.wave >= 2 && serial % 5 === 3) kind = "runner";
+      if (game.wave >= 3 && serial % 7 === 6) kind = "tank";
+      const scale = 1.08 + (game.wave - 1) * 0.3;
       const profile =
         kind === "runner"
           ? { hp: 38, speed: 92, reward: 10, radius: 12 }
@@ -433,7 +433,7 @@ export default function Home() {
         pathIndex: 1,
         hp: profile.hp * scale,
         maxHp: profile.hp * scale,
-        speed: profile.speed * (1 + game.wave * 0.012),
+        speed: profile.speed * (1.04 + game.wave * 0.015),
         reward: profile.reward + Math.floor(game.wave / 3),
         radius: profile.radius,
         slowUntil: 0,
@@ -563,7 +563,7 @@ export default function Home() {
         !game.lost
       ) {
         game.active = false;
-        const bonus = 24 + game.wave * 6;
+        const bonus = 20 + game.wave * 5;
         game.gold += bonus;
         if (game.wave >= FINAL_WAVE) {
           game.won = true;
