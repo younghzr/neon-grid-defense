@@ -2836,6 +2836,642 @@ canvas:focus-visible {
   }
 }
 
+/* BUILD 05.0 page hierarchy and battlefield readability */
+.viewPage {
+  animation: viewPageIn 260ms cubic-bezier(.2, .8, .2, 1) both;
+}
+
+@keyframes viewPageIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.menuTopbar nav {
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.menuTopbar nav::-webkit-scrollbar { display: none; }
+
+.menuTopbar nav button {
+  padding-inline: 15px;
+  white-space: nowrap;
+}
+
+.homePage {
+  padding-bottom: 18px;
+}
+
+.homePage .menuHero {
+  min-height: 520px;
+}
+
+.portalGrid {
+  display: grid;
+  margin-top: 16px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 15px;
+}
+
+.portalGrid > button {
+  --portal-accent: var(--cyan);
+  position: relative;
+  display: flex;
+  min-height: 226px;
+  overflow: hidden;
+  padding: 24px;
+  align-items: flex-start;
+  flex-direction: column;
+  border: 1px solid rgba(192, 207, 229, .15);
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 84% 8%, color-mix(in srgb, var(--portal-accent) 12%, transparent), transparent 36%),
+    linear-gradient(145deg, rgba(37, 49, 76, .78), rgba(22, 31, 52, .7));
+  color: #edf3f8;
+  cursor: pointer;
+  text-align: left;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .045), 0 16px 44px rgba(6, 11, 24, .12);
+  transition: transform 180ms ease, border-color 180ms ease, background 180ms ease, box-shadow 180ms ease;
+}
+
+.portalGrid > button::after {
+  position: absolute;
+  right: 22px;
+  bottom: -1px;
+  width: 70px;
+  height: 3px;
+  border-radius: 99px 99px 0 0;
+  content: "";
+  background: var(--portal-accent);
+  box-shadow: 0 0 14px color-mix(in srgb, var(--portal-accent) 58%, transparent);
+}
+
+.portalGrid > button:hover {
+  transform: translateY(-5px);
+  border-color: color-mix(in srgb, var(--portal-accent) 55%, rgba(192, 207, 229, .2));
+  background:
+    radial-gradient(circle at 84% 8%, color-mix(in srgb, var(--portal-accent) 18%, transparent), transparent 40%),
+    linear-gradient(145deg, rgba(44, 58, 88, .9), rgba(26, 37, 61, .84));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06), 0 22px 52px rgba(6, 11, 24, .18);
+}
+
+.portalNumber {
+  position: absolute;
+  top: 20px;
+  right: 22px;
+  color: color-mix(in srgb, var(--portal-accent) 33%, #334158);
+  font: 800 22px/1 ui-monospace, monospace;
+}
+
+.portalGrid > button > i {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  margin-bottom: 22px;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--portal-accent) 46%, transparent);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--portal-accent) 9%, rgba(27, 38, 62, .82));
+  color: var(--portal-accent);
+  font-size: 17px;
+  font-style: normal;
+  font-weight: 850;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05);
+}
+
+.portalGrid > button > strong,
+.portalGrid > button > small,
+.portalGrid > button > b {
+  display: block;
+}
+
+.portalGrid > button > strong {
+  margin-bottom: 8px;
+  font-size: 21px;
+}
+
+.portalGrid > button > small {
+  color: #98a6b9;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.portalGrid > button > b {
+  margin-top: auto;
+  padding-top: 16px;
+  color: var(--portal-accent);
+  font-size: 12px;
+}
+
+.archiveHeader {
+  align-items: flex-end;
+}
+
+.selectionHeaderAside {
+  display: flex;
+  max-width: 390px;
+  align-items: flex-end;
+  flex-direction: column;
+  gap: 12px;
+  color: #9aa7ba;
+  font-size: 14px;
+  line-height: 1.7;
+  text-align: right;
+}
+
+.archiveResumeButton,
+.archiveLaunchButton,
+.archiveLinkButton {
+  border: 1px solid rgba(143, 221, 227, .28);
+  border-radius: 12px;
+  background: rgba(45, 58, 87, .66);
+  color: #cce6e8;
+  cursor: pointer;
+  font-weight: 750;
+  transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
+}
+
+.archiveResumeButton {
+  min-height: 38px;
+  padding: 0 14px;
+}
+
+.archiveResumeButton:hover,
+.archiveLaunchButton:hover,
+.archiveLinkButton:hover {
+  transform: translateY(-1px);
+  border-color: rgba(143, 221, 227, .58);
+  background: rgba(58, 75, 108, .78);
+}
+
+.towerArchiveGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.towerArchiveCard,
+.enemyArchiveCard {
+  --card-accent: var(--cyan);
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(192, 207, 229, .15);
+  border-radius: 25px;
+  background:
+    radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--card-accent) 10%, transparent), transparent 38%),
+    linear-gradient(145deg, rgba(36, 47, 74, .82), rgba(22, 31, 52, .76));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .045), 0 18px 48px rgba(6, 11, 24, .13);
+}
+
+.towerArchiveCard {
+  min-height: 560px;
+  padding: 26px;
+}
+
+.towerArchiveCard::after,
+.enemyArchiveCard::after {
+  position: absolute;
+  right: 24px;
+  bottom: -1px;
+  width: 76px;
+  height: 3px;
+  border-radius: 99px 99px 0 0;
+  content: "";
+  background: var(--card-accent);
+  box-shadow: 0 0 13px color-mix(in srgb, var(--card-accent) 50%, transparent);
+}
+
+.archiveTowerTop,
+.enemyArchiveTop {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.archiveTowerTop {
+  margin-bottom: 22px;
+}
+
+.archiveTowerVisual {
+  display: grid;
+  flex: 0 0 82px;
+  width: 82px;
+  height: 82px;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--card-accent) 30%, transparent);
+  border-radius: 24px;
+  background: color-mix(in srgb, var(--card-accent) 7%, rgba(25, 35, 58, .86));
+}
+
+.archiveTowerVisual .towerGlyph {
+  transform: scale(1.48);
+  box-shadow: inset 0 0 16px color-mix(in srgb, var(--tower-color) 8%, transparent), 0 10px 25px rgba(5, 10, 22, .2);
+}
+
+.archiveTowerTop small,
+.enemyArchiveTop small {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--card-accent);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .08em;
+}
+
+.archiveTowerTop h2,
+.enemyArchiveTop h2 {
+  margin-bottom: 6px;
+  font-size: 25px;
+}
+
+.archiveTowerTop b {
+  color: #e4bd84;
+  font: 750 12px/1.2 ui-monospace, monospace;
+}
+
+.towerArchiveCard > p,
+.enemyArchiveCard > p {
+  color: #a7b3c4;
+  font-size: 14px;
+  line-height: 1.75;
+}
+
+.archiveMetrics,
+.enemyMetrics {
+  display: grid;
+  margin: 20px 0;
+  grid-template-columns: repeat(3, 1fr);
+  border: 1px solid rgba(192, 207, 229, .12);
+  border-radius: 16px;
+  background: rgba(18, 27, 47, .42);
+}
+
+.archiveMetrics > span,
+.enemyMetrics > span {
+  padding: 13px 9px;
+  text-align: center;
+}
+
+.archiveMetrics > span + span,
+.enemyMetrics > span + span {
+  border-left: 1px solid rgba(192, 207, 229, .1);
+}
+
+.archiveMetrics small,
+.archiveMetrics b,
+.enemyMetrics small,
+.enemyMetrics b {
+  display: block;
+}
+
+.archiveMetrics small,
+.enemyMetrics small {
+  margin-bottom: 5px;
+  color: #7f8da2;
+  font-size: 10px;
+}
+
+.archiveMetrics b,
+.enemyMetrics b {
+  color: #edf3f8;
+  font: 800 14px/1 ui-monospace, monospace;
+}
+
+.archivePlacement,
+.counterTip {
+  padding: 13px 15px;
+  border: 1px solid color-mix(in srgb, var(--card-accent) 20%, rgba(192, 207, 229, .08));
+  border-radius: 15px;
+  background: color-mix(in srgb, var(--card-accent) 5%, rgba(22, 31, 52, .46));
+}
+
+.archivePlacement > span,
+.counterTip > span {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--card-accent);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .06em;
+}
+
+.archivePlacement p,
+.counterTip p {
+  margin: 0;
+  color: #9eabba;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.archiveBranches {
+  display: grid;
+  margin-top: 14px;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.archiveBranches > div {
+  min-height: 108px;
+  padding: 12px;
+  border: 1px solid rgba(180, 164, 221, .18);
+  border-radius: 14px;
+  background: rgba(57, 52, 88, .24);
+}
+
+.archiveBranches span,
+.archiveBranches b,
+.archiveBranches small {
+  display: block;
+}
+
+.archiveBranches span {
+  margin-bottom: 5px;
+  color: #8f82b3;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.archiveBranches b {
+  margin-bottom: 6px;
+  color: #ddd6ed;
+  font-size: 12px;
+}
+
+.archiveBranches small {
+  color: #8995a8;
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.archiveLaunchButton {
+  width: 100%;
+  min-height: 44px;
+  margin-top: 16px;
+}
+
+.enemyArchiveGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.enemyArchiveCard {
+  min-height: 360px;
+  padding: 24px;
+}
+
+.enemyArchiveTop {
+  margin-bottom: 20px;
+}
+
+.enemyArchiveTop > div > span {
+  color: #7f8da2;
+  font-size: 11px;
+}
+
+.enemyGlyph {
+  position: relative;
+  display: grid;
+  flex: 0 0 84px;
+  width: 84px;
+  height: 84px;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--enemy-color) 40%, transparent);
+  border-radius: 25px;
+  background:
+    radial-gradient(circle at 50% 45%, color-mix(in srgb, var(--enemy-color) 15%, transparent), transparent 48%),
+    linear-gradient(145deg, rgba(39, 51, 78, .9), rgba(20, 30, 49, .94));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05), 0 12px 28px rgba(5, 10, 22, .16);
+}
+
+.enemyGlyph i {
+  position: absolute;
+  display: block;
+}
+
+.enemyGlyphHalo {
+  width: 56px;
+  height: 56px;
+  border: 2px solid color-mix(in srgb, var(--enemy-color) 48%, transparent);
+  border-radius: 50%;
+  opacity: .62;
+}
+
+.enemyGlyphBody {
+  width: 39px;
+  height: 31px;
+  border: 2px solid var(--enemy-color);
+  border-radius: 15px 18px 16px 13px;
+  background: color-mix(in srgb, var(--enemy-color) 22%, #26364c);
+  transform: rotate(-5deg);
+  box-shadow: 0 0 14px color-mix(in srgb, var(--enemy-color) 18%, transparent);
+}
+
+.enemyGlyphCore {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--enemy-color);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--enemy-color) 70%, transparent);
+}
+
+.enemyGlyph > b {
+  position: absolute;
+  right: 7px;
+  bottom: 7px;
+  display: grid;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--enemy-color) 45%, transparent);
+  border-radius: 8px;
+  background: rgba(15, 24, 41, .84);
+  color: var(--enemy-color);
+  font-size: 10px;
+}
+
+.enemyGlyph-runner .enemyGlyphBody {
+  width: 45px;
+  height: 22px;
+  border-radius: 20px 8px 20px 8px;
+  transform: rotate(-11deg) skewX(-8deg);
+}
+
+.enemyGlyph-tank .enemyGlyphBody {
+  width: 48px;
+  height: 37px;
+  border-width: 3px;
+  border-radius: 14px;
+}
+
+.enemyGlyph-shield .enemyGlyphHalo {
+  width: 62px;
+  height: 62px;
+  border-width: 4px;
+  border-right-color: transparent;
+}
+
+.enemyGlyph-support .enemyGlyphBody {
+  border-radius: 50% 50% 16px 16px;
+}
+
+.enemyGlyph-support .enemyGlyphCore {
+  width: 23px;
+  height: 7px;
+  border-radius: 4px;
+  box-shadow: 0 0 9px color-mix(in srgb, var(--enemy-color) 56%, transparent);
+}
+
+.enemyGlyph-boss .enemyGlyphBody {
+  width: 53px;
+  height: 42px;
+  border-width: 3px;
+  border-radius: 22px 14px 22px 14px;
+}
+
+.enemyGlyph-boss .enemyGlyphHalo {
+  width: 66px;
+  height: 66px;
+  border-style: dashed;
+}
+
+.counterTip {
+  margin-top: 18px;
+}
+
+.archiveLinkButton {
+  display: flex;
+  width: 100%;
+  min-height: 38px;
+  margin-top: 10px;
+  padding: 0 11px;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+}
+
+.archiveLinkButton b {
+  color: var(--cyan);
+  font-size: 10px;
+}
+
+.buildPad {
+  width: clamp(25px, 5.625%, 54px);
+  border-radius: 14px;
+}
+
+.buildPad::before {
+  inset: 5px;
+  border-radius: 10px;
+}
+
+.arenaPanel,
+.sidebar {
+  border-radius: 24px;
+}
+
+.towerCard {
+  min-height: 74px;
+  border-radius: 18px;
+}
+
+.towerInspector {
+  border-radius: 18px;
+}
+
+@media (max-width: 1080px) {
+  .portalGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .towerArchiveGrid,
+  .enemyArchiveGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .towerArchiveCard {
+    min-height: 0;
+  }
+}
+
+@media (max-width: 760px) {
+  .menuTopbar nav {
+    justify-content: flex-start;
+    overflow-x: auto;
+  }
+
+  .menuTopbar nav button {
+    flex: 0 0 auto;
+    min-width: 74px;
+    padding-inline: 12px;
+  }
+
+  .homePage .menuHero {
+    min-height: auto;
+  }
+
+  .portalGrid,
+  .towerArchiveGrid,
+  .enemyArchiveGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .portalGrid > button {
+    min-height: 196px;
+  }
+
+  .archiveHeader {
+    align-items: flex-start;
+  }
+
+  .selectionHeaderAside {
+    max-width: none;
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .towerArchiveCard,
+  .enemyArchiveCard {
+    padding: 21px;
+    border-radius: 21px;
+  }
+
+  .firstHint {
+    display: none;
+  }
+}
+
+@media (max-width: 430px) {
+  .menuTopbar nav button {
+    flex: 1 1 0;
+    min-width: 0;
+    padding-inline: 7px;
+    font-size: 12px;
+  }
+
+  .archiveTowerTop,
+  .enemyArchiveTop {
+    align-items: flex-start;
+  }
+
+  .archiveTowerVisual,
+  .enemyGlyph {
+    flex-basis: 72px;
+    width: 72px;
+    height: 72px;
+    border-radius: 20px;
+  }
+
+  .archiveTowerVisual .towerGlyph {
+    transform: scale(1.3);
+  }
+
+  .archiveBranches {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

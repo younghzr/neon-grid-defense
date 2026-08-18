@@ -31,9 +31,10 @@ test("server-renders the Chinese game lobby", async () => {
   const html = await response.text();
   assert.match(html, /<html lang="zh-CN">/);
   assert.match(html, /<title>霓虹防线｜中文塔防小游戏<\/title>/);
-  assert.match(html, /BUILD 04\.0/);
+  assert.match(html, /BUILD 05\.0/);
   assert.match(html, /开始战役/);
   assert.match(html, /特殊模式/);
+  assert.doesNotMatch(html, /防御军械库|敌军图鉴|THREAT CODEX/);
   assert.doesNotMatch(html, /codex-preview|Your site is taking shape/);
 });
 
@@ -51,9 +52,15 @@ test("ships the expanded tower-defense systems and social metadata", async () =>
   assert.match(page, /const SPECIALIZATIONS/);
   assert.match(page, /priority:\s*TargetPriority/);
   assert.match(page, /bestStars/);
+  assert.match(page, /const SCREEN_HASH/);
+  assert.match(page, /防御军械库/);
+  assert.match(page, /敌军图鉴/);
+  assert.match(page, /打开完整敌情档案/);
   assert.match(css, /\.waveIntel/);
   assert.match(css, /\.specializationPicker/);
   assert.match(css, /\.battleReport/);
+  assert.match(css, /\.portalGrid/);
+  assert.match(css, /\.enemyArchiveGrid/);
   assert.match(layout, /og-v4\.png/);
   assert.match(layout, /炮塔专精/);
 });

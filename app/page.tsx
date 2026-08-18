@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 
 const WIDTH = 960;
 const HEIGHT = 620;
-const PAD_SIZE = 46;
+const PAD_SIZE = 54;
 const GUEST_SAVE_KEY = "neon-grid-defense:guest-save:v1";
 const AUTO_WAVE_DELAY = 3;
 const EMP_COOLDOWN = 36;
@@ -20,7 +20,35 @@ type TowerSpecialization =
   | "frost_brittle"
   | "rail_pierce"
   | "rail_mark";
-type Screen = "home" | "campaign" | "modes" | "game";
+type Screen = "home" | "campaign" | "modes" | "arsenal" | "codex" | "game";
+
+const SCREEN_HASH: Record<Screen, string> = {
+  home: "#/home",
+  campaign: "#/campaign",
+  modes: "#/modes",
+  arsenal: "#/arsenal",
+  codex: "#/enemies",
+  game: "#/battle",
+};
+
+const SCREEN_TITLES: Record<Screen, string> = {
+  home: "霓虹防线｜指挥大厅",
+  campaign: "战役地图｜霓虹防线",
+  modes: "特殊模式｜霓虹防线",
+  arsenal: "炮塔档案｜霓虹防线",
+  codex: "敌情档案｜霓虹防线",
+  game: "核心保卫战｜霓虹防线",
+};
+
+const getScreenFromHash = (hash: string): Screen => {
+  const route = hash.replace(/^#\/?/, "").split(/[?&]/)[0];
+  if (route === "campaign") return "campaign";
+  if (route === "modes") return "modes";
+  if (route === "arsenal") return "arsenal";
+  if (route === "enemies") return "codex";
+  if (route === "battle") return "game";
+  return "home";
+};
 
 type RuleSet = {
   finalWave: number | null;
@@ -274,7 +302,7 @@ const LEVELS: LevelConfig[] = [
     difficulty: "困难",
     accent: "#e4bd84",
     path: pointList([[-40, 470], [160, 470], [160, 230], [400, 230], [400, 70], [640, 70], [640, 310], [880, 310], [880, 150], [1000, 150]]),
-    pads: padList([["A1", 80, 390], ["A2", 240, 390], ["B1", 80, 230], ["B2", 240, 150], ["B3", 320, 310], ["C1", 480, 150], ["C2", 560, 150], ["C3", 720, 150], ["D1", 560, 310], ["D2", 720, 390], ["D3", 800, 230], ["E1", 960, 230]]),
+    pads: padList([["A1", 80, 390], ["A2", 240, 390], ["B1", 80, 230], ["B2", 240, 150], ["B3", 320, 310], ["C1", 480, 150], ["C2", 560, 150], ["C3", 720, 150], ["D1", 560, 310], ["D2", 720, 390], ["D3", 800, 230], ["E1", 920, 70]]),
     rules: makeRules({ finalWave: 9, initialGold: 215, lives: 10, enemyHealth: 1.12, enemySpeed: 1.06, enemyCount: 1.12, tankWave: 2, waveBonus: 0.94 }),
   },
   {
@@ -296,7 +324,7 @@ const LEVELS: LevelConfig[] = [
     difficulty: "噩梦",
     accent: "#df918e",
     path: pointList([[-40, 310], [160, 310], [160, 70], [400, 70], [400, 230], [640, 230], [640, 470], [880, 470], [880, 310], [1000, 310]]),
-    pads: padList([["A1", 80, 230], ["A2", 240, 150], ["B1", 320, 150], ["B2", 480, 150], ["C1", 560, 310], ["C2", 720, 310], ["C3", 560, 390], ["D1", 720, 550], ["D2", 800, 390], ["E1", 960, 390]]),
+    pads: padList([["A1", 80, 230], ["A2", 240, 150], ["B1", 320, 150], ["B2", 480, 150], ["C1", 560, 310], ["C2", 720, 310], ["C3", 560, 390], ["D1", 720, 550], ["D2", 800, 390], ["E1", 920, 230]]),
     rules: makeRules({ finalWave: 12, initialGold: 195, lives: 8, enemyHealth: 1.3, enemySpeed: 1.14, enemyCount: 1.22, spawnRate: 0.84, runnerWave: 1, tankWave: 2, waveBonus: 0.8 }),
   },
 ];
@@ -513,6 +541,30 @@ const SPECIALIZATIONS: Record<
     { id: "rail_pierce", name: "贯穿弹芯", description: "继续打击附近第 2 个目标，造成 60% 伤害" },
     { id: "rail_mark", name: "破甲标记", description: "标记 3 秒，使后续伤害提高" },
   ],
+};
+
+const TOWER_TACTICS: Record<TowerKind, { role: string; placement: string }> = {
+  pulse: {
+    role: "稳定清理轻型单位，并快速击穿能量护盾。",
+    placement: "适合放在连续弯道内侧，让双联炮管获得更长输出时间。",
+  },
+  frost: {
+    role: "压低敌群速度，为其他炮塔创造集中火力窗口。",
+    placement: "优先覆盖入口或长直道，目标策略建议选择“最快”。",
+  },
+  rail: {
+    role: "远距离重击重装与首领单位，可无视敌方装甲。",
+    placement: "放在视野开阔的后排部署盘，避免射程被短路段浪费。",
+  },
+};
+
+const ENEMY_COUNTERS: Record<EnemyKind, string> = {
+  drone: "用脉冲塔建立基础交叉火力。",
+  runner: "冷凝塔设为“最快”，优先压制高速突破。",
+  tank: "轨道炮无视装甲，适合设置为“最强”。",
+  shield: "脉冲伤害对护盾额外有效，先破盾再集火。",
+  support: "会修复附近单位，应在队伍中段前优先击破。",
+  boss: "保留 EMP，利用专精炮塔持续集中输出。",
 };
 
 const createEnemyCounts = (): EnemyCounts => ({
@@ -737,6 +789,22 @@ function TowerIcon({ kind, mini = false }: { kind: TowerKind; mini?: boolean }) 
   );
 }
 
+function EnemyIcon({ kind }: { kind: EnemyKind }) {
+  const enemy = ENEMY_PROFILES[kind];
+  return (
+    <span
+      className={`enemyGlyph enemyGlyph-${kind}`}
+      style={{ "--enemy-color": enemy.color } as React.CSSProperties}
+      aria-hidden="true"
+    >
+      <i className="enemyGlyphHalo" />
+      <i className="enemyGlyphBody" />
+      <i className="enemyGlyphCore" />
+      <b>{enemy.shortName}</b>
+    </span>
+  );
+}
+
 export default function Home() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const activeLevelRef = useRef<LevelConfig>(LEVELS[0]);
@@ -749,6 +817,11 @@ export default function Home() {
   const guestSaveRef = useRef<GuestSave>(createEmptyGuestSave());
   const saveReadyRef = useRef(false);
   const resultRecordedRef = useRef(false);
+  const screenRef = useRef<Screen>("home");
+  const battleReadyRef = useRef(false);
+  const battleOriginRef = useRef<Screen>("home");
+  const battleCanGoBackRef = useRef(false);
+  const announcedScreenRef = useRef<Screen | null>(null);
   const [screen, setScreen] = useState<Screen>("home");
   const [activeMission, setActiveMission] = useState<ActiveMission>({
     category: "战役模式",
@@ -810,6 +883,28 @@ export default function Home() {
     );
   };
 
+  const navigateScreen = (
+    next: Screen,
+    options: { replace?: boolean; saveBattle?: boolean } = {},
+  ) => {
+    const previous = screenRef.current;
+    if (previous === "game" && next !== "game" && options.saveBattle !== false) {
+      gameRef.current.paused = true;
+      saveCurrentSession();
+    }
+    screenRef.current = next;
+    setScreen(next);
+    if (typeof window === "undefined") return;
+    const targetHash = SCREEN_HASH[next];
+    if (window.location.hash === targetHash) return;
+    const targetUrl = `${window.location.pathname}${window.location.search}${targetHash}`;
+    if (options.replace) {
+      window.history.replaceState({ screen: next, from: previous }, "", targetUrl);
+    } else {
+      window.history.pushState({ screen: next, from: previous }, "", targetUrl);
+    }
+  };
+
   const startMission = (
     level: LevelConfig,
     rules: RuleSet,
@@ -828,13 +923,24 @@ export default function Home() {
     setActiveMission({ category, title, level, rules });
     setUi(toUi(gameRef.current));
     setToast("先部署防御塔，再启动敌袭");
-    setScreen("game");
+    battleOriginRef.current = screenRef.current;
+    battleCanGoBackRef.current = false;
+    battleReadyRef.current = true;
+    navigateScreen("game");
   };
 
   const returnToLobby = () => {
-    gameRef.current.paused = true;
-    saveCurrentSession();
-    setScreen("home");
+    if (
+      battleOriginRef.current === "home" &&
+      battleCanGoBackRef.current &&
+      typeof window !== "undefined"
+    ) {
+      gameRef.current.paused = true;
+      saveCurrentSession();
+      window.history.back();
+      return;
+    }
+    navigateScreen("home", { replace: true });
   };
 
   const resumeGuestSession = () => {
@@ -909,7 +1015,33 @@ export default function Home() {
     });
     setUi(toUi(restoredGame));
     setToast(restoredGame.active ? "本机存档已恢复，按空格键继续" : "本机存档已恢复");
-    setScreen("game");
+    const currentHash = typeof window !== "undefined" ? window.location.hash : "";
+    const historyOrigin =
+      typeof window !== "undefined" &&
+      typeof window.history.state?.from === "string" &&
+      window.history.state.from in SCREEN_HASH
+        ? (window.history.state.from as Screen)
+        : currentHash === SCREEN_HASH.game
+          ? "game"
+          : screenRef.current;
+    battleOriginRef.current = currentHash === SCREEN_HASH.game ? historyOrigin : screenRef.current;
+    battleCanGoBackRef.current =
+      currentHash === SCREEN_HASH.home ||
+      (currentHash === SCREEN_HASH.game && historyOrigin === "home");
+    battleReadyRef.current = true;
+    navigateScreen("game");
+  };
+
+  const returnToSavedBattle = () => {
+    if (
+      battleReadyRef.current &&
+      typeof window !== "undefined" &&
+      window.history.state?.from === "game"
+    ) {
+      window.history.back();
+      return;
+    }
+    resumeGuestSession();
   };
 
   const showToast = (message: string) => {
@@ -1388,10 +1520,11 @@ export default function Home() {
         if (target) {
           tower.angle = Math.atan2(target.y - tower.y, target.x - tower.x);
           if (tower.cooldown <= 0) {
+            const muzzleOffset = tower.kind === "rail" ? 49 : tower.kind === "pulse" ? 40 : 38;
             game.projectiles.push({
               kind: tower.kind,
-              x: tower.x + Math.cos(tower.angle) * 22,
-              y: tower.y + Math.sin(tower.angle) * 22,
+              x: tower.x + Math.cos(tower.angle) * muzzleOffset,
+              y: tower.y + Math.sin(tower.angle) * muzzleOffset,
               targetId: target.id,
               speed: spec.projectileSpeed,
               damage: getTowerDamage(tower),
@@ -1416,7 +1549,8 @@ export default function Home() {
         const dy = target.y - projectile.y;
         const length = Math.hypot(dx, dy);
         const step = projectile.speed * dt;
-        if (length <= step + target.radius) {
+        const targetVisualRadius = target.radius * (target.kind === "boss" ? 1.08 : 1.16);
+        if (length <= step + targetVisualRadius) {
           dealDamage(target, projectile.damage, projectile.kind, projectile.color);
           if (projectile.slow && !target.dead) {
             const rawSlow = projectile.specialization === "frost_zero" ? 0.42 : projectile.slow;
@@ -1533,31 +1667,31 @@ export default function Home() {
       ctx.save();
       for (let row = 0; row < 4; row += 1) {
         for (let column = 0; column < 6; column += 1) {
-          const x = 18 + column * 160;
-          const y = 10 + row * 160;
-          roundedRect(ctx, x, y, 124, 124, 18);
-          ctx.fillStyle = (row + column) % 2 === 0 ? "rgba(58, 77, 105, .11)" : "rgba(10, 20, 35, .12)";
+          const x = 14 + column * 160;
+          const y = 8 + row * 160;
+          roundedRect(ctx, x, y, 132, 132, 26);
+          ctx.fillStyle = (row + column) % 2 === 0 ? "rgba(67, 88, 116, .09)" : "rgba(10, 20, 35, .1)";
           ctx.fill();
-          ctx.strokeStyle = "rgba(169, 191, 220, .055)";
+          ctx.strokeStyle = "rgba(169, 191, 220, .04)";
           ctx.lineWidth = 1;
           ctx.stroke();
-          ctx.fillStyle = "rgba(160, 186, 217, .09)";
-          [[12, 12], [112, 12], [12, 112], [112, 112]].forEach(([dx, dy]) => {
+          ctx.fillStyle = "rgba(160, 186, 217, .065)";
+          [[14, 14], [118, 14], [14, 118], [118, 118]].forEach(([dx, dy]) => {
             ctx.beginPath();
             ctx.arc(x + dx, y + dy, 1.5, 0, Math.PI * 2);
             ctx.fill();
           });
         }
       }
-      ctx.strokeStyle = "rgba(171, 195, 225, .045)";
+      ctx.strokeStyle = "rgba(171, 195, 225, .025)";
       ctx.lineWidth = 1;
-      for (let x = 0; x <= WIDTH; x += 80) {
+      for (let x = 0; x <= WIDTH; x += 160) {
         ctx.beginPath();
         ctx.moveTo(x, 0);
         ctx.lineTo(x, HEIGHT);
         ctx.stroke();
       }
-      for (let y = 70; y < HEIGHT; y += 80) {
+      for (let y = 0; y < HEIGHT; y += 160) {
         ctx.beginPath();
         ctx.moveTo(0, y);
         ctx.lineTo(WIDTH, y);
@@ -1588,11 +1722,11 @@ export default function Home() {
       ctx.lineJoin = "round";
 
       const layers: Array<{ width: number; color: string; blur?: number }> = [
-        { width: 94, color: "rgba(4, 10, 21, .38)", blur: 14 },
-        { width: 86, color: "#101a2a" },
-        { width: 80, color: "#536176" },
-        { width: 72, color: "#26364d" },
-        { width: 62, color: "#32455f" },
+        { width: 102, color: "rgba(4, 10, 21, .35)", blur: 18 },
+        { width: 94, color: "#111c2c" },
+        { width: 84, color: "#56667a" },
+        { width: 74, color: "#293a51" },
+        { width: 66, color: "#344a63" },
       ];
       layers.forEach((layer) => {
         traceActivePath();
@@ -1600,7 +1734,7 @@ export default function Home() {
         ctx.lineWidth = layer.width;
         ctx.shadowColor = layer.blur ? "rgba(0, 0, 0, .7)" : "transparent";
         ctx.shadowBlur = layer.blur ?? 0;
-        ctx.shadowOffsetY = layer.blur ? 9 : 0;
+        ctx.shadowOffsetY = layer.blur ? 7 : 0;
         ctx.stroke();
       });
       ctx.shadowBlur = 0;
@@ -1622,12 +1756,12 @@ export default function Home() {
 
       path.slice(1, -1).forEach((point) => {
         ctx.beginPath();
-        ctx.arc(point.x, point.y, 35, 0, Math.PI * 2);
+        ctx.arc(point.x, point.y, 38, 0, Math.PI * 2);
         ctx.strokeStyle = "rgba(174, 195, 220, .14)";
         ctx.lineWidth = 1.5;
         ctx.stroke();
         ctx.beginPath();
-        ctx.arc(point.x, point.y, 29, 0, Math.PI * 2);
+        ctx.arc(point.x, point.y, 32, 0, Math.PI * 2);
         ctx.strokeStyle = "rgba(8, 16, 29, .34)";
         ctx.stroke();
       });
@@ -1640,23 +1774,20 @@ export default function Home() {
         const occupied = gameRef.current.towers.some((tower) => distance(point, tower) < 1);
         ctx.translate(point.x, point.y);
         ctx.beginPath();
-        ctx.ellipse(0, 10, 25, 12, 0, 0, Math.PI * 2);
+        ctx.ellipse(0, 12, 29, 14, 0, 0, Math.PI * 2);
         ctx.fillStyle = "rgba(3, 8, 18, .48)";
         ctx.fill();
-        polygonPath(ctx, [
-          { x: -19, y: -15 }, { x: 19, y: -15 }, { x: 24, y: -9 }, { x: 24, y: 9 },
-          { x: 19, y: 15 }, { x: -19, y: 15 }, { x: -24, y: 9 }, { x: -24, y: -9 },
-        ]);
+        roundedRect(ctx, -27, -21, 54, 42, 14);
         ctx.fillStyle = occupied ? "#1a283c" : "rgba(26, 40, 59, .86)";
         ctx.fill();
         ctx.strokeStyle = occupied ? "rgba(151, 210, 216, .34)" : "rgba(156, 182, 210, .23)";
         ctx.lineWidth = 1.5;
         ctx.stroke();
         ctx.beginPath();
-        ctx.arc(0, 0, 13, 0, Math.PI * 2);
+        ctx.arc(0, 0, 17, 0, Math.PI * 2);
         ctx.strokeStyle = "rgba(166, 195, 222, .14)";
         ctx.stroke();
-        [[-17, -8], [17, -8], [-17, 8], [17, 8]].forEach(([x, y]) => {
+        [[-19, -10], [19, -10], [-19, 10], [19, 10]].forEach(([x, y]) => {
           ctx.beginPath();
           ctx.arc(x, y, 1.6, 0, Math.PI * 2);
           ctx.fillStyle = "rgba(190, 210, 230, .32)";
@@ -1667,28 +1798,27 @@ export default function Home() {
       ctx.restore();
     };
 
+    const drawTowerRange = (tower: Tower) => {
+      const spec = TOWERS[tower.kind];
+      const range = getTowerRange(tower);
+      ctx.beginPath();
+      ctx.arc(0, 0, range, 0, Math.PI * 2);
+      ctx.fillStyle = `${spec.color}0d`;
+      ctx.fill();
+      ctx.setLineDash([7, 8]);
+      ctx.strokeStyle = `${spec.color}6c`;
+      ctx.lineWidth = 1.4;
+      ctx.stroke();
+      ctx.setLineDash([]);
+    };
+
     const drawTowerBase = (tower: Tower, selected: boolean) => {
       const spec = TOWERS[tower.kind];
-      if (selected) {
-        const range = getTowerRange(tower);
-        ctx.beginPath();
-        ctx.arc(0, 0, range, 0, Math.PI * 2);
-        ctx.fillStyle = `${spec.color}0d`;
-        ctx.fill();
-        ctx.setLineDash([7, 8]);
-        ctx.strokeStyle = `${spec.color}6c`;
-        ctx.lineWidth = 1.4;
-        ctx.stroke();
-        ctx.setLineDash([]);
-      }
       ctx.beginPath();
-      ctx.ellipse(0, 12, 25, 11, 0, 0, Math.PI * 2);
+      ctx.ellipse(0, 14, 28, 12, 0, 0, Math.PI * 2);
       ctx.fillStyle = "rgba(2, 7, 16, .54)";
       ctx.fill();
-      polygonPath(ctx, [
-        { x: -21, y: -11 }, { x: -11, y: -21 }, { x: 11, y: -21 }, { x: 21, y: -11 },
-        { x: 21, y: 11 }, { x: 11, y: 21 }, { x: -11, y: 21 }, { x: -21, y: 11 },
-      ]);
+      roundedRect(ctx, -25, -22, 50, 44, 14);
       ctx.fillStyle = "#17253a";
       ctx.fill();
       ctx.lineWidth = selected ? 2.2 : 1.5;
@@ -1722,7 +1852,17 @@ export default function Home() {
       const pulse = 0.78 + Math.sin(gameRef.current.elapsed * 3.2 + tower.id) * 0.16;
       ctx.save();
       ctx.translate(tower.x, tower.y);
+      if (selected) drawTowerRange(tower);
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      ctx.shadowColor = "rgba(3, 8, 18, .42)";
+      ctx.shadowBlur = 12;
+      ctx.shadowOffsetY = 5;
       drawTowerBase(tower, selected);
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetY = 0;
+      const compactBoost = canvas.clientWidth > 0 && canvas.clientWidth < 600 ? 1.08 : 1;
+      ctx.scale(1.18 * compactBoost, 1.18 * compactBoost);
       ctx.rotate(tower.angle);
 
       if (tower.kind === "pulse") {
@@ -1826,9 +1966,17 @@ export default function Home() {
       const target = activeLevelRef.current.path[enemy.pathIndex];
       const angle = target ? Math.atan2(target.y - enemy.y, target.x - enemy.x) : 0;
       const bob = enemy.kind === "runner" ? Math.sin(gameRef.current.elapsed * 12 + enemy.id) * 1.4 : 0;
+      const compactBoost = canvas.clientWidth > 0 && canvas.clientWidth < 600 ? 1.08 : 1;
+      const visualScale = (enemy.kind === "boss" ? 1.08 : 1.16) * compactBoost;
       ctx.save();
       ctx.translate(enemy.x, enemy.y + bob);
       ctx.rotate(angle);
+      ctx.scale(visualScale, visualScale);
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      ctx.shadowColor = `${color}38`;
+      ctx.shadowBlur = enemy.kind === "boss" ? 12 : 8;
+      ctx.shadowOffsetY = 3;
       ctx.beginPath();
       ctx.ellipse(-2, 8, enemy.radius * 0.95, enemy.radius * 0.46, 0, 0, Math.PI * 2);
       ctx.fillStyle = "rgba(2, 7, 16, .46)";
@@ -2019,8 +2167,10 @@ export default function Home() {
       }
       ctx.restore();
 
-      const barWidth = enemy.kind === "boss" ? 62 : enemy.kind === "tank" ? 42 : 32;
-      const barY = enemy.y - enemy.radius - 12;
+      const baseBarWidth = enemy.kind === "boss" ? 62 : enemy.kind === "tank" ? 42 : 32;
+      const barWidth = baseBarWidth * Math.min(visualScale, 1.18);
+      const statusLift = stunned ? 15 : 0;
+      const barY = enemy.y - enemy.radius * visualScale - 13 - statusLift;
       roundedRect(ctx, enemy.x - barWidth / 2 - 1, barY - 1, barWidth + 2, 7, 3);
       ctx.fillStyle = "rgba(9, 15, 27, .9)";
       ctx.fill();
@@ -2251,12 +2401,9 @@ export default function Home() {
   );
 
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "auto" });
-  }, [screen]);
-
-  useEffect(() => {
+    let loaded = createEmptyGuestSave();
     try {
-      const loaded = parseGuestSave(window.localStorage.getItem(GUEST_SAVE_KEY));
+      loaded = parseGuestSave(window.localStorage.getItem(GUEST_SAVE_KEY));
       guestSaveRef.current = loaded;
       saveReadyRef.current = true;
       setGuestSave(loaded);
@@ -2265,7 +2412,69 @@ export default function Home() {
       saveReadyRef.current = true;
       setSaveStatus("unavailable");
     }
+
+    const currentHash = window.location.hash;
+    let requested = getScreenFromHash(currentHash);
+    const knownHash = Object.values(SCREEN_HASH).includes(currentHash);
+    const canRestoreBattle = Boolean(
+      loaded.session && LEVELS.some((level) => level.id === loaded.session?.levelId),
+    );
+    if (requested === "game" && canRestoreBattle) {
+      resumeGuestSession();
+      return;
+    }
+    if (requested === "game") requested = "home";
+    screenRef.current = requested;
+    setScreen(requested);
+    if (!knownHash || currentHash === SCREEN_HASH.game) {
+      const targetUrl = `${window.location.pathname}${window.location.search}${SCREEN_HASH[requested]}`;
+      window.history.replaceState({ screen: requested, from: null }, "", targetUrl);
+    }
   }, []);
+
+  useEffect(() => {
+    const handleHistoryNavigation = () => {
+      const currentHash = window.location.hash;
+      let next = getScreenFromHash(currentHash);
+      const knownHash = Object.values(SCREEN_HASH).includes(currentHash);
+      if (next === "game" && !battleReadyRef.current) next = "home";
+      if (!knownHash || (currentHash === SCREEN_HASH.game && next === "home")) {
+        const targetUrl = `${window.location.pathname}${window.location.search}${SCREEN_HASH[next]}`;
+        window.history.replaceState({ screen: next, from: null }, "", targetUrl);
+      }
+      if (next === screenRef.current) return;
+      if (screenRef.current === "game" && next !== "game") {
+        gameRef.current.paused = true;
+        saveCurrentSession();
+      }
+      screenRef.current = next;
+      setScreen(next);
+    };
+    window.addEventListener("popstate", handleHistoryNavigation);
+    window.addEventListener("hashchange", handleHistoryNavigation);
+    return () => {
+      window.removeEventListener("popstate", handleHistoryNavigation);
+      window.removeEventListener("hashchange", handleHistoryNavigation);
+    };
+  }, [activeMission]);
+
+  useEffect(() => {
+    document.title = SCREEN_TITLES[screen];
+    const shouldMoveFocus = announcedScreenRef.current !== null && announcedScreenRef.current !== screen;
+    announcedScreenRef.current = screen;
+    if (!shouldMoveFocus) return;
+    const frame = window.requestAnimationFrame(() => {
+      const heading = document.querySelector<HTMLElement>(".viewPage h1, .gameShell h1");
+      if (!heading) return;
+      heading.tabIndex = -1;
+      heading.focus({ preventScroll: true });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [screen]);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }, [screen]);
 
   useEffect(() => {
     if (screen !== "game") return;
@@ -2278,6 +2487,10 @@ export default function Home() {
     window.addEventListener("pagehide", handlePageHide);
     document.addEventListener("visibilitychange", handleVisibilityChange);
     return () => {
+      if (screen === "game") {
+        gameRef.current.paused = true;
+        saveCurrentSession(false);
+      }
       window.clearInterval(interval);
       window.removeEventListener("pagehide", handlePageHide);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
@@ -2371,14 +2584,16 @@ export default function Home() {
     return (
       <main className="menuShell">
         <header className="menuTopbar">
-          <button className="menuLogo" onClick={() => setScreen("home")} aria-label="返回游戏大厅">
+          <button className="menuLogo" onClick={() => navigateScreen("home")} aria-label="返回游戏大厅">
             <span className="brandMark" aria-hidden="true"><span /></span>
             <span><small>NEON GRID</small><b>霓虹防线</b></span>
           </button>
           <nav aria-label="主菜单">
-            <button className={screen === "home" ? "active" : ""} onClick={() => setScreen("home")}>大厅</button>
-            <button className={screen === "campaign" ? "active" : ""} onClick={() => setScreen("campaign")}>战役</button>
-            <button className={screen === "modes" ? "active" : ""} onClick={() => setScreen("modes")}>特殊模式</button>
+            <button className={screen === "home" ? "active" : ""} aria-current={screen === "home" ? "page" : undefined} onClick={() => navigateScreen("home")}>大厅</button>
+            <button className={screen === "campaign" ? "active" : ""} aria-current={screen === "campaign" ? "page" : undefined} onClick={() => navigateScreen("campaign")}>战役</button>
+            <button className={screen === "modes" ? "active" : ""} aria-current={screen === "modes" ? "page" : undefined} onClick={() => navigateScreen("modes")}>模式</button>
+            <button className={screen === "arsenal" ? "active" : ""} aria-current={screen === "arsenal" ? "page" : undefined} onClick={() => navigateScreen("arsenal")}>炮塔</button>
+            <button className={screen === "codex" ? "active" : ""} aria-current={screen === "codex" ? "page" : undefined} onClick={() => navigateScreen("codex")}>敌情</button>
           </nav>
           <span className={`onlineStatus guestModeStatus ${saveStatus}`}>
             <i />
@@ -2387,7 +2602,7 @@ export default function Home() {
         </header>
 
         {screen === "home" && (
-          <>
+          <div className="viewPage homePage">
             <section className="menuHero">
               <div className="heroCopy">
                 <p className="heroKicker"><span>战术系统已升级</span> / 指挥官终端</p>
@@ -2403,15 +2618,18 @@ export default function Home() {
                   </button>
                 )}
                 <div className="menuActions">
-                  <button className="primaryMenuButton" onClick={() => setScreen("campaign")}>
+                  <button className="primaryMenuButton" onClick={() => navigateScreen("campaign")}>
                     <span>开始战役</span><b>选择战区 →</b>
                   </button>
-                  <button className="secondaryMenuButton" onClick={() => setScreen("modes")}>
+                  <button className="secondaryMenuButton" onClick={() => navigateScreen("modes")}>
                     特殊模式
                   </button>
                 </div>
                 <p className="localSaveNote">
-                  <i /> 游客进度自动保存在当前设备；换设备或清理浏览器数据后无法恢复。
+                  <i /> 游客进度自动保存在当前设备
+                  {localRecordCount > 0
+                    ? ` · 已记录 ${localRecordCount} 项战绩，最高 ${localBestScore.toLocaleString()} 分。`
+                    : "；换设备或清理浏览器数据后无法恢复。"}
                 </p>
               </div>
               <div className="heroRadar" aria-hidden="true">
@@ -2421,22 +2639,25 @@ export default function Home() {
                 <i className="radarPing pingOne" /><i className="radarPing pingTwo" /><i className="radarPing pingThree" />
               </div>
             </section>
-            <section className="menuSummary" aria-label="游戏内容概览">
-              <article><strong>06</strong><span><b>战役关卡</b><small>从数据港到核心迷城</small></span></article>
-              <article><strong>06</strong><span><b>敌军类别</b><small>护盾、修复与首领单位</small></span></article>
-              <article>
-                <strong>{localRecordCount.toString().padStart(2, "0")}</strong>
-                <span>
-                  <b>本机记录</b>
-                  <small>{localBestScore > 0 ? `最高 ${localBestScore.toLocaleString()} 分` : "完成战局后自动记录"}</small>
-                </span>
-              </article>
+            <section className="portalGrid" aria-label="指挥中心入口">
+              <button style={{ "--portal-accent": "#8fdde3" } as React.CSSProperties} onClick={() => navigateScreen("campaign")}>
+                <span className="portalNumber">01</span><i>战</i><strong>战役地图</strong><small>六个独立战区与渐进难度</small><b>选择关卡 →</b>
+              </button>
+              <button style={{ "--portal-accent": "#b4a4dd" } as React.CSSProperties} onClick={() => navigateScreen("modes")}>
+                <span className="portalNumber">02</span><i>模</i><strong>特殊模式</strong><small>无尽、闪电战与硬核协议</small><b>选择协议 →</b>
+              </button>
+              <button style={{ "--portal-accent": "#e4bd84" } as React.CSSProperties} onClick={() => navigateScreen("arsenal")}>
+                <span className="portalNumber">03</span><i>塔</i><strong>炮塔档案</strong><small>属性、定位与三级专精路线</small><b>查看军械库 →</b>
+              </button>
+              <button style={{ "--portal-accent": "#8bcaae" } as React.CSSProperties} onClick={() => navigateScreen("codex")}>
+                <span className="portalNumber">04</span><i>敌</i><strong>敌情档案</strong><small>六类敌军与对应克制策略</small><b>打开图鉴 →</b>
+              </button>
             </section>
-          </>
+          </div>
         )}
 
         {screen === "campaign" && (
-          <section className="selectionPage">
+          <section className="selectionPage viewPage">
             <div className="selectionHeader">
               <div><p>CAMPAIGN / 战役模式</p><h1>选择战区</h1></div>
               <span>关卡越靠后，资源更少、敌人更强。</span>
@@ -2473,7 +2694,7 @@ export default function Home() {
         )}
 
         {screen === "modes" && (
-          <section className="selectionPage modeSelection">
+          <section className="selectionPage modeSelection viewPage">
             <div className="selectionHeader">
               <div><p>SPECIAL PROTOCOLS / 特殊模式</p><h1>选择协议</h1></div>
               <span>打破标准战役规则，用不同策略刷新战绩。</span>
@@ -2504,7 +2725,77 @@ export default function Home() {
           </section>
         )}
 
-        <footer className="menuFooter"><span>NEON GRID DEFENSE // BUILD 04.0</span><span>游客档案仅保存在当前设备</span></footer>
+        {screen === "arsenal" && (
+          <section className="selectionPage archivePage viewPage">
+            <div className="selectionHeader archiveHeader">
+              <div><p>DEFENSE ARCHIVE / 炮塔档案</p><h1>防御军械库</h1></div>
+              <div className="selectionHeaderAside">
+                <span>先了解火力定位与专精路线，再进入战场部署。</span>
+                {savedSession && <button className="archiveResumeButton" onClick={returnToSavedBattle}>← 返回战场</button>}
+              </div>
+            </div>
+            <div className="towerArchiveGrid">
+              {(Object.keys(TOWERS) as TowerKind[]).map((kind) => {
+                const tower = TOWERS[kind];
+                return (
+                  <article key={kind} className="towerArchiveCard" style={{ "--card-accent": tower.color } as React.CSSProperties}>
+                    <div className="archiveTowerTop">
+                      <span className="archiveTowerVisual"><TowerIcon kind={kind} /></span>
+                      <div><small>{tower.tagline}</small><h2>{tower.name}</h2><b>部署 ◈ {tower.cost}</b></div>
+                    </div>
+                    <p>{TOWER_TACTICS[kind].role}</p>
+                    <div className="archiveMetrics">
+                      <span><small>基础伤害</small><b>{tower.damage}</b></span>
+                      <span><small>攻击范围</small><b>{tower.range}</b></span>
+                      <span><small>每秒攻击</small><b>{(1 / tower.rate).toFixed(1)}</b></span>
+                    </div>
+                    <div className="archivePlacement"><span>部署建议</span><p>{TOWER_TACTICS[kind].placement}</p></div>
+                    <div className="archiveBranches">
+                      {SPECIALIZATIONS[kind].map((branch, index) => (
+                        <div key={branch.id}><span>路线 {index + 1}</span><b>{branch.name}</b><small>{branch.description}</small></div>
+                      ))}
+                    </div>
+                    <button className="archiveLaunchButton" onClick={() => navigateScreen("campaign")}>进入战役部署 →</button>
+                  </article>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
+        {screen === "codex" && (
+          <section className="selectionPage archivePage viewPage">
+            <div className="selectionHeader archiveHeader">
+              <div><p>THREAT CODEX / 敌情档案</p><h1>敌军图鉴</h1></div>
+              <div className="selectionHeaderAside">
+                <span>辨认轮廓与能力，提前为下一波调整目标策略。</span>
+                {savedSession && <button className="archiveResumeButton" onClick={returnToSavedBattle}>← 返回战场</button>}
+              </div>
+            </div>
+            <div className="enemyArchiveGrid">
+              {ENEMY_ORDER.map((kind) => {
+                const enemy = ENEMY_PROFILES[kind];
+                return (
+                  <article key={kind} className={`enemyArchiveCard ${kind}`} style={{ "--card-accent": enemy.color } as React.CSSProperties}>
+                    <div className="enemyArchiveTop">
+                      <EnemyIcon kind={kind} />
+                      <div><small>{kind === "boss" ? "首领级威胁" : "常规敌军"}</small><h2>{enemy.name}</h2><span>{enemy.shortName}型识别信号</span></div>
+                    </div>
+                    <p>{enemy.description}</p>
+                    <div className="enemyMetrics">
+                      <span><small>基础生命</small><b>{enemy.hp || "成长"}</b></span>
+                      <span><small>移动速度</small><b>{enemy.speed}</b></span>
+                      <span><small>突破伤害</small><b>{enemy.leakDamage}</b></span>
+                    </div>
+                    <div className="counterTip"><span>推荐对策</span><p>{ENEMY_COUNTERS[kind]}</p></div>
+                  </article>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
+        <footer className="menuFooter"><span>NEON GRID DEFENSE // BUILD 05.0</span><span>游客档案仅保存在当前设备</span></footer>
       </main>
     );
   }
@@ -2854,14 +3145,9 @@ export default function Home() {
               <span>清除补给</span><b>◈ {inspectedPlan.clearBonus}</b>
             </div>
             <p>{getWaveTip(intelCounts)}</p>
-            <details className="enemyGuide">
-              <summary>查看敌情档案</summary>
-              <div>
-                {ENEMY_ORDER.map((kind) => (
-                  <p key={kind}><b>{ENEMY_PROFILES[kind].name}</b><span>{ENEMY_PROFILES[kind].description}</span></p>
-                ))}
-              </div>
-            </details>
+            <button className="archiveLinkButton" onClick={() => navigateScreen("codex")}>
+              <span>打开完整敌情档案</span><b>新页面 →</b>
+            </button>
           </div>
         </aside>
       </div>
