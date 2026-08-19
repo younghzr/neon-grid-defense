@@ -3357,7 +3357,7 @@ canvas:focus-visible {
 }
 
 .buildPad {
-  width: clamp(25px, 5.625%, 54px);
+  width: clamp(25px, 7.5%, 54px);
   border-radius: 14px;
 }
 
@@ -3380,7 +3380,320 @@ canvas:focus-visible {
   border-radius: 18px;
 }
 
+/* BUILD 06.0 portrait battlefield and direct tower controls */
+.gameShell {
+  width: min(1090px, calc(100% - 48px));
+}
+
+.gameLayout {
+  grid-template-columns: minmax(0, 720px) 316px;
+  justify-content: center;
+  align-items: start;
+}
+
+.arenaPanel {
+  width: 100%;
+  max-width: 720px;
+}
+
+.canvasWrap {
+  aspect-ratio: 720 / 900;
+}
+
+.towerQuickPanel {
+  --quick-accent: var(--cyan);
+  position: absolute;
+  z-index: 7;
+  width: 274px;
+  padding: 14px;
+  border: 1px solid color-mix(in srgb, var(--quick-accent) 48%, rgba(192, 207, 229, .18));
+  border-radius: 20px;
+  background: linear-gradient(145deg, rgba(32, 43, 67, .97), rgba(18, 27, 47, .97));
+  box-shadow: 0 22px 54px rgba(3, 8, 20, .42), inset 0 1px 0 rgba(255, 255, 255, .06);
+  transform: translate(24px, -50%);
+  backdrop-filter: blur(16px);
+  animation: quickPanelIn 150ms ease-out;
+}
+
+.towerQuickPanel.alignRight {
+  transform: translate(calc(-100% - 24px), -50%);
+}
+
+.towerQuickPanel.alignTop {
+  transform: translate(24px, -24px);
+}
+
+.towerQuickPanel.alignTop.alignRight {
+  transform: translate(calc(-100% - 24px), -24px);
+}
+
+.towerQuickPanel.alignBottom {
+  transform: translate(24px, calc(-100% + 24px));
+}
+
+.towerQuickPanel.alignBottom.alignRight {
+  transform: translate(calc(-100% - 24px), calc(-100% + 24px));
+}
+
+@keyframes quickPanelIn {
+  from { opacity: 0; scale: .97; }
+}
+
+.quickClose {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: grid;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  place-items: center;
+  border: 1px solid rgba(192, 207, 229, .14);
+  border-radius: 9px;
+  background: rgba(13, 21, 37, .56);
+  color: #9aa7ba;
+  cursor: pointer;
+  font-size: 19px;
+}
+
+.quickClose:hover {
+  border-color: color-mix(in srgb, var(--quick-accent) 52%, transparent);
+  color: #fff;
+}
+
+.quickTowerTitle {
+  display: flex;
+  padding-right: 30px;
+  align-items: center;
+  gap: 10px;
+}
+
+.quickTowerTitle small,
+.quickTowerTitle b {
+  display: block;
+}
+
+.quickTowerTitle small {
+  margin-bottom: 3px;
+  color: #8f9caf;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .08em;
+}
+
+.quickTowerTitle b {
+  color: #f0f5f7;
+  font-size: 15px;
+}
+
+.quickUpgradeButton,
+.quickSellButton,
+.quickBranches button {
+  border: 1px solid rgba(192, 207, 229, .16);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: border-color 150ms ease, background 150ms ease, transform 150ms ease;
+}
+
+.quickUpgradeButton {
+  display: flex;
+  width: 100%;
+  min-height: 44px;
+  margin-top: 12px;
+  padding: 0 12px;
+  align-items: center;
+  justify-content: space-between;
+  border-color: color-mix(in srgb, var(--quick-accent) 48%, transparent);
+  background: color-mix(in srgb, var(--quick-accent) 17%, rgba(27, 38, 61, .9));
+  font-weight: 800;
+}
+
+.quickUpgradeButton b {
+  color: #e8cfaa;
+  font: 800 12px/1 ui-monospace, monospace;
+}
+
+.quickUpgradeButton:hover:not(:disabled),
+.quickBranches button:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--quick-accent) 78%, white 8%);
+  background: color-mix(in srgb, var(--quick-accent) 24%, rgba(27, 38, 61, .9));
+  transform: translateY(-1px);
+}
+
+.quickUpgradeButton:disabled,
+.quickBranches button:disabled {
+  cursor: not-allowed;
+  opacity: .45;
+}
+
+.quickBranches {
+  display: grid;
+  margin-top: 12px;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+}
+
+.quickBranches > span {
+  grid-column: 1 / -1;
+  color: #97a4b7;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.quickBranches button {
+  min-height: 72px;
+  padding: 9px;
+  background: rgba(35, 45, 70, .76);
+  color: #e2e7ef;
+  text-align: left;
+}
+
+.quickBranches button b,
+.quickBranches button small {
+  display: block;
+}
+
+.quickBranches button b {
+  margin-bottom: 5px;
+  font-size: 12px;
+}
+
+.quickBranches button small {
+  color: #8f9caf;
+  font-size: 9px;
+  line-height: 1.35;
+}
+
+.quickComplete {
+  display: flex;
+  min-height: 40px;
+  margin-top: 12px;
+  padding: 0 11px;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid color-mix(in srgb, var(--quick-accent) 27%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--quick-accent) 10%, transparent);
+}
+
+.quickComplete span {
+  color: #95a2b5;
+  font-size: 10px;
+}
+
+.quickComplete b {
+  color: color-mix(in srgb, var(--quick-accent) 72%, white);
+  font-size: 12px;
+}
+
+.quickSellButton {
+  width: 100%;
+  min-height: 34px;
+  margin-top: 8px;
+  background: rgba(21, 29, 48, .62);
+  color: #9ba7b9;
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.quickSellButton:hover {
+  border-color: rgba(221, 139, 158, .48);
+  color: #efb4c0;
+}
+
+.toast {
+  z-index: 9;
+}
+
+/* The archive icons use the same large, simple silhouettes as the battle units. */
+.towerGlyphBase {
+  left: 8px;
+  bottom: 7px;
+  width: 28px;
+  height: 12px;
+  border-radius: 8px;
+}
+
+.towerGlyphBody {
+  left: 12px;
+  bottom: 14px;
+  width: 21px;
+  height: 19px;
+  border-radius: 50%;
+}
+
+.towerGlyphBarrel,
+.towerGlyph-pulse .towerGlyphBarrel,
+.towerGlyph-frost .towerGlyphBarrel,
+.towerGlyph-rail .towerGlyphBarrel {
+  left: 23px;
+  top: 13px;
+  width: 19px;
+  height: 9px;
+  border: 1px solid color-mix(in srgb, var(--tower-color) 68%, #5a697c);
+  border-radius: 5px;
+  clip-path: none;
+  background: #1a283d;
+  transform: rotate(-18deg);
+}
+
+.towerGlyph-frost .towerGlyphBody {
+  left: 12px;
+  width: 21px;
+  border-radius: 50%;
+  transform: none;
+  background: color-mix(in srgb, var(--tower-color) 62%, #35405a);
+}
+
+.towerGlyph-frost .towerGlyphBarrel {
+  background: color-mix(in srgb, var(--tower-color) 58%, #313653);
+}
+
+.towerGlyph-rail .towerGlyphBody {
+  left: 10px;
+  width: 24px;
+  border-radius: 8px;
+}
+
+.towerGlyph-rail .towerGlyphBarrel {
+  left: 22px;
+  width: 22px;
+  background: linear-gradient(to bottom, #17243a 0 38%, var(--tower-color) 38% 62%, #17243a 62%);
+}
+
+.enemyGlyphBody,
+.enemyGlyph-runner .enemyGlyphBody,
+.enemyGlyph-tank .enemyGlyphBody,
+.enemyGlyph-support .enemyGlyphBody,
+.enemyGlyph-boss .enemyGlyphBody {
+  transform: none;
+  border-radius: 18px;
+}
+
+.enemyGlyph-runner .enemyGlyphBody {
+  border-radius: 999px;
+}
+
+.enemyGlyph-support .enemyGlyphBody {
+  border-radius: 50%;
+}
+
+.enemyGlyph-boss .enemyGlyphHalo {
+  border-style: solid;
+}
+
 @media (max-width: 1080px) {
+  .gameLayout {
+    width: min(100%, 720px);
+    margin-inline: auto;
+    grid-template-columns: minmax(0, 720px);
+  }
+
+  .arenaPanel,
+  .sidebar {
+    width: 100%;
+  }
+
   .portalGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -3396,6 +3709,36 @@ canvas:focus-visible {
 }
 
 @media (max-width: 760px) {
+  .gameShell {
+    width: min(100% - 18px, 720px);
+  }
+
+  .towerQuickPanel,
+  .towerQuickPanel.alignRight,
+  .towerQuickPanel.alignTop,
+  .towerQuickPanel.alignTop.alignRight,
+  .towerQuickPanel.alignBottom,
+  .towerQuickPanel.alignBottom.alignRight {
+    position: absolute;
+    right: 9px;
+    bottom: 9px;
+    left: 9px !important;
+    top: auto !important;
+    width: auto;
+    max-height: calc(100% - 18px);
+    padding: 12px;
+    transform: none;
+  }
+
+  .quickTowerTitle .towerGlyph {
+    width: 36px;
+    height: 36px;
+  }
+
+  .quickUpgradeButton {
+    margin-top: 9px;
+  }
+
   .menuTopbar nav {
     justify-content: flex-start;
     overflow-x: auto;

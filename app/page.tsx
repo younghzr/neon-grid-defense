@@ -2,8 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 
-const WIDTH = 960;
-const HEIGHT = 620;
+const SOURCE_WIDTH = 960;
+const SOURCE_HEIGHT = 620;
+const WIDTH = 720;
+const HEIGHT = 900;
 const PAD_SIZE = 54;
 const GUEST_SAVE_KEY = "neon-grid-defense:guest-save:v1";
 const AUTO_WAVE_DELAY = 3;
@@ -107,6 +109,7 @@ type GuestSession = {
   rules: RuleSet;
   game: Game;
   savedAt: number;
+  layout?: "portrait";
 };
 
 type GuestSave = {
@@ -240,11 +243,16 @@ type WavePlan = {
   hasBoss: boolean;
 };
 
+const rotateForPortrait = (x: number, y: number): Point => ({
+  x: (y / SOURCE_HEIGHT) * WIDTH,
+  y: (x / SOURCE_WIDTH) * HEIGHT,
+});
+
 const pointList = (items: Array<[number, number]>): Point[] =>
-  items.map(([x, y]) => ({ x, y }));
+  items.map(([x, y]) => rotateForPortrait(x, y));
 
 const padList = (items: Array<[string, number, number]>) =>
-  items.map(([id, x, y]) => ({ id, point: { x, y } }));
+  items.map(([id, x, y]) => ({ id, point: rotateForPortrait(x, y) }));
 
 const makeRules = (overrides: Partial<RuleSet> = {}): RuleSet => ({
   finalWave: 8,
@@ -872,6 +880,7 @@ export default function Home() {
               particles: [],
             },
             savedAt: now,
+            layout: "portrait",
           };
     writeGuestSave(
       {
@@ -951,10 +960,13 @@ export default function Home() {
       writeGuestSave({ ...guestSaveRef.current, session: null, updatedAt: Date.now() });
       return;
     }
+    const migratePoint = (point: Point) =>
+      session.layout === "portrait" ? point : { ...point, ...rotateForPortrait(point.x, point.y) };
     const restoredEnemies = session.game.enemies.map((enemy) => {
       const profile = ENEMY_PROFILES[enemy.kind] ?? ENEMY_PROFILES.drone;
       return {
         ...enemy,
+        ...migratePoint(enemy),
         shield: Number.isFinite(enemy.shield) ? Math.max(0, enemy.shield) : 0,
         maxShield: Number.isFinite(enemy.maxShield) ? Math.max(0, enemy.maxShield) : 0,
         armor: Number.isFinite(enemy.armor) ? Math.max(0, enemy.armor) : profile.armor,
@@ -970,6 +982,8 @@ export default function Home() {
     });
     const restoredTowers = session.game.towers.map((tower) => ({
       ...tower,
+      ...migratePoint(tower),
+      angle: session.layout === "portrait" ? tower.angle : Math.PI / 2,
       priority:
         tower.priority === "first" || tower.priority === "strong" || tower.priority === "fast"
           ? tower.priority
@@ -1665,18 +1679,18 @@ export default function Home() {
       ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
       ctx.save();
-      for (let row = 0; row < 4; row += 1) {
-        for (let column = 0; column < 6; column += 1) {
-          const x = 14 + column * 160;
-          const y = 8 + row * 160;
-          roundedRect(ctx, x, y, 132, 132, 26);
+      for (let row = 0; row < 6; row += 1) {
+        for (let column = 0; column < 4; column += 1) {
+          const x = 15 + column * 180;
+          const y = 13 + row * 150;
+          roundedRect(ctx, x, y, 150, 124, 28);
           ctx.fillStyle = (row + column) % 2 === 0 ? "rgba(67, 88, 116, .09)" : "rgba(10, 20, 35, .1)";
           ctx.fill();
           ctx.strokeStyle = "rgba(169, 191, 220, .04)";
           ctx.lineWidth = 1;
           ctx.stroke();
           ctx.fillStyle = "rgba(160, 186, 217, .065)";
-          [[14, 14], [118, 14], [14, 118], [118, 118]].forEach(([dx, dy]) => {
+          [[16, 16], [134, 16], [16, 108], [134, 108]].forEach(([dx, dy]) => {
             ctx.beginPath();
             ctx.arc(x + dx, y + dy, 1.5, 0, Math.PI * 2);
             ctx.fill();
@@ -1685,13 +1699,13 @@ export default function Home() {
       }
       ctx.strokeStyle = "rgba(171, 195, 225, .025)";
       ctx.lineWidth = 1;
-      for (let x = 0; x <= WIDTH; x += 160) {
+      for (let x = 0; x <= WIDTH; x += 180) {
         ctx.beginPath();
         ctx.moveTo(x, 0);
         ctx.lineTo(x, HEIGHT);
         ctx.stroke();
       }
-      for (let y = 0; y < HEIGHT; y += 160) {
+      for (let y = 0; y < HEIGHT; y += 150) {
         ctx.beginPath();
         ctx.moveTo(0, y);
         ctx.lineTo(WIDTH, y);
@@ -1722,11 +1736,11 @@ export default function Home() {
       ctx.lineJoin = "round";
 
       const layers: Array<{ width: number; color: string; blur?: number }> = [
-        { width: 102, color: "rgba(4, 10, 21, .35)", blur: 18 },
-        { width: 94, color: "#111c2c" },
-        { width: 84, color: "#56667a" },
-        { width: 74, color: "#293a51" },
-        { width: 66, color: "#344a63" },
+        { width: 94, color: "rgba(4, 10, 21, .35)", blur: 18 },
+        { width: 86, color: "#111c2c" },
+        { width: 78, color: "#53647a" },
+        { width: 70, color: "#293a51" },
+        { width: 62, color: "#354b63" },
       ];
       layers.forEach((layer) => {
         traceActivePath();
@@ -1866,93 +1880,70 @@ export default function Home() {
       ctx.rotate(tower.angle);
 
       if (tower.kind === "pulse") {
-        roundedRect(ctx, -10, -10, 23, 20, 7);
-        ctx.fillStyle = "#293d58";
+        ctx.beginPath();
+        ctx.arc(-1, 0, 12, 0, Math.PI * 2);
+        ctx.fillStyle = "#2c4058";
         ctx.fill();
-        ctx.strokeStyle = "#62758d";
-        ctx.lineWidth = 1.2;
+        ctx.strokeStyle = `${spec.color}8c`;
+        ctx.lineWidth = 1.6;
         ctx.stroke();
-        [-6, 6].forEach((y) => {
-          roundedRect(ctx, 5, y - 3.2, 29, 6.4, 2.5);
-          ctx.fillStyle = "#1d2b40";
+        [-5, 5].forEach((y) => {
+          roundedRect(ctx, 6, y - 3, 30, 6, 3);
+          ctx.fillStyle = "#1c2b40";
           ctx.fill();
-          ctx.strokeStyle = `${spec.color}aa`;
-          ctx.stroke();
-          ctx.fillStyle = spec.color;
-          ctx.globalAlpha = pulse;
-          ctx.fillRect(25, y - 1.4, 9, 2.8);
-          ctx.globalAlpha = 1;
         });
         ctx.beginPath();
-        ctx.arc(-2, 0, 6.5, 0, Math.PI * 2);
+        ctx.arc(-1, 0, 6.8, 0, Math.PI * 2);
         ctx.fillStyle = spec.color;
         ctx.globalAlpha = pulse;
         ctx.fill();
       } else if (tower.kind === "frost") {
-        roundedRect(ctx, -10, -9, 20, 18, 6);
-        ctx.fillStyle = "#293650";
+        ctx.beginPath();
+        ctx.arc(0, 0, 12.5, 0, Math.PI * 2);
+        ctx.fillStyle = "#373c61";
         ctx.fill();
-        for (let index = -1; index <= 1; index += 1) {
-          ctx.save();
-          ctx.translate(4, index * 7);
-          polygonPath(ctx, [
-            { x: -4, y: 0 }, { x: 12, y: -5 }, { x: 28, y: 0 }, { x: 12, y: 5 },
-          ]);
-          ctx.fillStyle = index === 0 ? spec.color : "#766da8";
-          ctx.globalAlpha = index === 0 ? pulse : 0.76;
-          ctx.fill();
-          ctx.strokeStyle = "rgba(224, 219, 255, .58)";
-          ctx.lineWidth = 1;
-          ctx.stroke();
-          ctx.restore();
-        }
+        ctx.strokeStyle = `${spec.color}aa`;
+        ctx.lineWidth = 1.8;
+        ctx.stroke();
+        roundedRect(ctx, 5, -7, 31, 14, 7);
+        ctx.fillStyle = "#514e7b";
+        ctx.fill();
+        roundedRect(ctx, 12, -3, 24, 6, 3);
+        ctx.globalAlpha = pulse;
+        ctx.fillStyle = spec.color;
+        ctx.fill();
         ctx.globalAlpha = 1;
         ctx.beginPath();
-        ctx.arc(2, 0, 5, 0, Math.PI * 2);
-        ctx.fillStyle = "#d9d2f4";
+        ctx.arc(0, 0, 6, 0, Math.PI * 2);
+        ctx.fillStyle = "#e2dcf7";
         ctx.fill();
       } else {
-        roundedRect(ctx, -13, -12, 26, 24, 6);
-        ctx.fillStyle = "#2d394e";
+        roundedRect(ctx, -14, -11, 28, 22, 9);
+        ctx.fillStyle = "#354053";
         ctx.fill();
-        ctx.strokeStyle = "#657286";
-        ctx.lineWidth = 1.2;
+        ctx.strokeStyle = `${spec.color}86`;
+        ctx.lineWidth = 1.6;
         ctx.stroke();
-        [-6, 6].forEach((y) => {
-          roundedRect(ctx, -1, y - 3.4, 43, 6.8, 2);
-          ctx.fillStyle = "#182538";
-          ctx.fill();
-          ctx.strokeStyle = "#596a80";
-          ctx.stroke();
-        });
+        roundedRect(ctx, 2, -6, 43, 12, 6);
+        ctx.fillStyle = "#182638";
+        ctx.fill();
+        roundedRect(ctx, 8, -2, 37, 4, 2);
         ctx.fillStyle = spec.color;
         ctx.globalAlpha = pulse;
-        ctx.fillRect(5, -1.5, 38, 3);
+        ctx.fill();
         ctx.globalAlpha = 1;
-        roundedRect(ctx, 31, -9, 10, 18, 3);
-        ctx.strokeStyle = `${spec.color}a5`;
-        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(-4, 0, 5, 0, Math.PI * 2);
+        ctx.fillStyle = "#ffe6b6";
+        ctx.fill();
       }
       if (tower.level === 3) {
         ctx.rotate(-tower.angle);
         ctx.beginPath();
-        ctx.moveTo(-6, -20);
-        ctx.lineTo(-2, -29);
-        ctx.strokeStyle = spec.color;
-        ctx.lineWidth = 1.5;
+        ctx.arc(0, 0, 24 + Math.sin(gameRef.current.elapsed * 3 + tower.id), 0, Math.PI * 2);
+        ctx.strokeStyle = `${spec.color}64`;
+        ctx.lineWidth = 2;
         ctx.stroke();
-        ctx.beginPath();
-        ctx.arc(-2, -30, 2, 0, Math.PI * 2);
-        ctx.fillStyle = spec.color;
-        ctx.fill();
-        ctx.rotate(tower.angle);
-        ctx.beginPath();
-        ctx.arc(0, 0, 24 + Math.sin(gameRef.current.elapsed * 3 + tower.id) * 1.4, 0, Math.PI * 2);
-        ctx.setLineDash([3, 6]);
-        ctx.strokeStyle = `${spec.color}72`;
-        ctx.lineWidth = 1.3;
-        ctx.stroke();
-        ctx.setLineDash([]);
       }
       ctx.restore();
     };
@@ -1985,148 +1976,107 @@ export default function Home() {
       if (enemy.kind === "boss") {
         ctx.save();
         ctx.rotate(-gameRef.current.elapsed * 0.55);
-        ctx.setLineDash([8, 6]);
         ctx.beginPath();
         ctx.arc(0, 0, 34, 0, Math.PI * 2);
         ctx.strokeStyle = enemy.hp / enemy.maxHp < 0.35 ? "#df918e" : `${color}98`;
-        ctx.lineWidth = 2.5;
+        ctx.lineWidth = 3;
         ctx.stroke();
-        ctx.setLineDash([]);
         ctx.restore();
-        polygonPath(ctx, [
-          { x: 28, y: 0 }, { x: 15, y: -20 }, { x: -12, y: -22 }, { x: -27, y: -9 },
-          { x: -27, y: 9 }, { x: -12, y: 22 }, { x: 15, y: 20 },
-        ]);
+        roundedRect(ctx, -27, -21, 54, 42, 18);
         ctx.fillStyle = "#45394d";
         ctx.fill();
         ctx.strokeStyle = color;
-        ctx.lineWidth = 2.6;
+        ctx.lineWidth = 3;
         ctx.stroke();
         ctx.beginPath();
-        ctx.arc(5, 0, 10, 0, Math.PI * 2);
+        ctx.arc(5, 0, 11, 0, Math.PI * 2);
         ctx.fillStyle = enemy.hp / enemy.maxHp < 0.35 ? "#df918e" : color;
         ctx.globalAlpha = 0.82 + Math.sin(gameRef.current.elapsed * 5) * 0.12;
         ctx.fill();
         ctx.globalAlpha = 1;
-        [-12, 10].forEach((y) => {
-          ctx.fillStyle = "rgba(241, 221, 178, .72)";
-          ctx.fillRect(-21, y - 1.5, 13, 3);
-        });
+        roundedRect(ctx, -20, -3, 13, 6, 3);
+        ctx.fillStyle = "rgba(241, 221, 178, .72)";
+        ctx.fill();
       } else if (enemy.kind === "shield") {
         ctx.beginPath();
-        ctx.arc(0, 0, 16, 0, Math.PI * 2);
+        ctx.arc(-2, 0, 16, 0, Math.PI * 2);
         ctx.fillStyle = "#263b50";
         ctx.fill();
         ctx.strokeStyle = color;
         ctx.lineWidth = 2;
         ctx.stroke();
-        polygonPath(ctx, [
-          { x: 4, y: -7 }, { x: 19, y: -10 }, { x: 15, y: 0 }, { x: 19, y: 10 }, { x: 4, y: 7 },
-        ]);
+        roundedRect(ctx, 6, -11, 13, 22, 7);
         ctx.fillStyle = "#315067";
         ctx.fill();
-        ctx.strokeStyle = `${color}aa`;
-        ctx.stroke();
         if (enemy.shield > 0) {
           ctx.beginPath();
-          ctx.arc(0, 0, 22 + Math.sin(gameRef.current.elapsed * 5 + enemy.id) * 1.2, -1.2, 1.2);
+          ctx.arc(-1, 0, 23 + Math.sin(gameRef.current.elapsed * 5 + enemy.id), -1.2, 1.2);
           ctx.strokeStyle = "rgba(145, 201, 230, .78)";
           ctx.lineWidth = 3;
           ctx.stroke();
         }
       } else if (enemy.kind === "support") {
-        polygonPath(ctx, [
-          { x: 18, y: 0 }, { x: 7, y: -15 }, { x: -13, y: -12 }, { x: -18, y: 0 },
-          { x: -13, y: 12 }, { x: 7, y: 15 },
-        ]);
+        ctx.beginPath();
+        ctx.arc(0, 0, 17, 0, Math.PI * 2);
         ctx.fillStyle = "#29443f";
         ctx.fill();
         ctx.strokeStyle = color;
         ctx.lineWidth = 2;
         ctx.stroke();
+        roundedRect(ctx, -3, -10, 6, 20, 3);
         ctx.fillStyle = color;
-        ctx.fillRect(-3, -9, 6, 18);
-        ctx.fillRect(-9, -3, 18, 6);
+        ctx.fill();
+        roundedRect(ctx, -10, -3, 20, 6, 3);
+        ctx.fill();
         ctx.beginPath();
-        ctx.arc(0, 0, 20 + Math.sin(gameRef.current.elapsed * 3 + enemy.id) * 2, 0, Math.PI * 2);
+        ctx.arc(0, 0, 22 + Math.sin(gameRef.current.elapsed * 3 + enemy.id), 0, Math.PI * 2);
         ctx.strokeStyle = "rgba(139, 202, 174, .25)";
         ctx.lineWidth = 2;
         ctx.stroke();
       } else if (enemy.kind === "runner") {
         ctx.strokeStyle = "rgba(221, 160, 194, .28)";
-        ctx.lineWidth = 2;
-        [-5, 5].forEach((y) => {
-          ctx.beginPath();
-          ctx.moveTo(-27, y);
-          ctx.lineTo(-16, y);
-          ctx.stroke();
-        });
-        polygonPath(ctx, [
-          { x: 16, y: 0 }, { x: -7, y: -12 }, { x: -4, y: -4 }, { x: -15, y: 0 },
-          { x: -4, y: 4 }, { x: -7, y: 12 },
-        ]);
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(-25, 0);
+        ctx.lineTo(-15, 0);
+        ctx.stroke();
+        roundedRect(ctx, -16, -10, 34, 20, 10);
         ctx.fillStyle = "#342d48";
         ctx.fill();
         ctx.strokeStyle = color;
         ctx.lineWidth = 2;
         ctx.stroke();
         ctx.beginPath();
-        ctx.arc(4, 0, 3.5, 0, Math.PI * 2);
+        ctx.arc(7, 0, 4, 0, Math.PI * 2);
         ctx.fillStyle = color;
         ctx.fill();
       } else if (enemy.kind === "tank") {
-        [-13, 13].forEach((y) => {
-          roundedRect(ctx, -19, y - 4, 34, 8, 3);
-          ctx.fillStyle = "#2a2635";
-          ctx.fill();
-          ctx.strokeStyle = "#6c4a5b";
-          ctx.lineWidth = 1.2;
-          ctx.stroke();
-          for (let x = -14; x <= 10; x += 8) {
-            ctx.beginPath();
-            ctx.arc(x, y, 1.6, 0, Math.PI * 2);
-            ctx.fillStyle = color;
-            ctx.globalAlpha = 0.48;
-            ctx.fill();
-          }
-        });
-        ctx.globalAlpha = 1;
-        polygonPath(ctx, [
-          { x: -15, y: -11 }, { x: 10, y: -11 }, { x: 19, y: -5 }, { x: 19, y: 5 },
-          { x: 10, y: 11 }, { x: -15, y: 11 },
-        ]);
+        roundedRect(ctx, -21, -15, 42, 30, 11);
         ctx.fillStyle = "#4a3441";
         ctx.fill();
         ctx.strokeStyle = color;
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 2.5;
         ctx.stroke();
-        roundedRect(ctx, -4, -7, 15, 14, 4);
+        roundedRect(ctx, -7, -8, 19, 16, 7);
         ctx.fillStyle = "#291f2c";
         ctx.fill();
+        roundedRect(ctx, 6, -3, 17, 6, 3);
         ctx.fillStyle = color;
-        ctx.fillRect(7, -2, 13, 4);
+        ctx.fill();
       } else {
         ctx.beginPath();
-        ctx.arc(0, 0, 14, 0, Math.PI * 2);
+        ctx.arc(0, 0, 15, 0, Math.PI * 2);
         ctx.fillStyle = "#273549";
         ctx.fill();
         ctx.strokeStyle = color;
         ctx.lineWidth = 2;
         ctx.stroke();
-        polygonPath(ctx, [
-          { x: 4, y: -6 }, { x: 18, y: -10 }, { x: 13, y: 0 }, { x: 18, y: 10 }, { x: 4, y: 6 },
-        ]);
+        roundedRect(ctx, 7, -7, 13, 14, 7);
         ctx.fillStyle = "#34465c";
         ctx.fill();
-        ctx.strokeStyle = "rgba(220, 231, 243, .6)";
-        ctx.stroke();
         ctx.beginPath();
-        ctx.arc(3, 0, 5, 0, Math.PI * 2);
+        ctx.arc(3, 0, 5.5, 0, Math.PI * 2);
         ctx.fillStyle = "#dd8b9e";
-        ctx.fill();
-        ctx.beginPath();
-        ctx.arc(4, -1, 1.5, 0, Math.PI * 2);
-        ctx.fillStyle = "#fff0f2";
         ctx.fill();
       }
 
@@ -2200,8 +2150,9 @@ export default function Home() {
     const draw = () => {
       const game = gameRef.current;
       const path = activeLevelRef.current.path;
-      const entranceY = path[0].y;
-      const coreY = path[path.length - 1].y;
+      const entranceX = path[0].x;
+      const coreX = path[path.length - 1].x;
+      const coreNodeY = HEIGHT - 24;
       drawBackdrop(game);
       drawPath(game);
       drawPadFoundations();
@@ -2210,41 +2161,41 @@ export default function Home() {
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.font = '800 15px "Microsoft YaHei UI", "PingFang SC", sans-serif';
-      roundedRect(ctx, 5, entranceY - 60, 60, 27, 8);
+      roundedRect(ctx, entranceX - 31, 8, 62, 28, 10);
       ctx.fillStyle = "rgba(19, 43, 58, .88)";
       ctx.fill();
       ctx.strokeStyle = "rgba(143, 221, 227, .48)";
       ctx.stroke();
       ctx.fillStyle = "#b5e4e7";
-      ctx.fillText("入口", 35, entranceY - 46);
+      ctx.fillText("入口", entranceX, 22);
 
-      roundedRect(ctx, 893, coreY - 60, 64, 27, 8);
+      roundedRect(ctx, coreX - 33, HEIGHT - 94, 66, 28, 10);
       ctx.fillStyle = "rgba(59, 31, 46, .88)";
       ctx.fill();
       ctx.strokeStyle = "rgba(221, 139, 158, .48)";
       ctx.stroke();
       ctx.fillStyle = "#efb1bd";
-      ctx.fillText("核心", 925, coreY - 46);
+      ctx.fillText("核心", coreX, HEIGHT - 80);
 
       ctx.shadowColor = "#df918e";
       ctx.shadowBlur = 16;
       ctx.beginPath();
-      ctx.arc(925, coreY, 28 + Math.sin(game.elapsed * 2.5) * 2, 0, Math.PI * 2);
+      ctx.arc(coreX, coreNodeY, 28 + Math.sin(game.elapsed * 2.5) * 2, 0, Math.PI * 2);
       ctx.strokeStyle = "rgba(221, 139, 158, .36)";
       ctx.lineWidth = 2;
       ctx.stroke();
       ctx.shadowBlur = 0;
       ctx.beginPath();
-      ctx.arc(925, coreY, 20, -game.elapsed * 0.55, Math.PI * 1.45 - game.elapsed * 0.55);
+      ctx.arc(coreX, coreNodeY, 20, -game.elapsed * 0.55, Math.PI * 1.45 - game.elapsed * 0.55);
       ctx.strokeStyle = "rgba(237, 165, 177, .86)";
       ctx.lineWidth = 3.5;
       ctx.stroke();
       ctx.beginPath();
-      ctx.arc(925, coreY, 11, 0, Math.PI * 2);
+      ctx.arc(coreX, coreNodeY, 11, 0, Math.PI * 2);
       ctx.fillStyle = "rgba(112, 50, 69, .92)";
       ctx.fill();
       ctx.beginPath();
-      ctx.arc(925, coreY, 5 + Math.sin(game.elapsed * 4) * 1.5, 0, Math.PI * 2);
+      ctx.arc(coreX, coreNodeY, 5 + Math.sin(game.elapsed * 4) * 1.5, 0, Math.PI * 2);
       ctx.fillStyle = "#f0a7b4";
       ctx.fill();
       ctx.restore();
@@ -2795,7 +2746,7 @@ export default function Home() {
           </section>
         )}
 
-        <footer className="menuFooter"><span>NEON GRID DEFENSE // BUILD 05.0</span><span>游客档案仅保存在当前设备</span></footer>
+        <footer className="menuFooter"><span>NEON GRID DEFENSE // BUILD 06.0</span><span>游客档案仅保存在当前设备</span></footer>
       </main>
     );
   }
@@ -2924,7 +2875,7 @@ export default function Home() {
               <span>区域地图</span>
               <b>{activeMission.level.name}</b>
             </div>
-            <p>选择塔后点击道路两侧的部署点 · 点击塔查看详情</p>
+            <p>选择塔后点击道路两侧的部署点 · 点击已部署炮塔立即升级</p>
           </div>
           <div className="canvasWrap">
             <canvas
@@ -2977,11 +2928,66 @@ export default function Home() {
                 );
               })}
             </div>
+            {selectedTower && selectedSpec && !ui.won && !ui.lost && (
+              <div
+                className={`towerQuickPanel ${selectedTower.x > WIDTH * 0.56 ? "alignRight" : ""} ${selectedTower.y < 175 ? "alignTop" : ""} ${selectedTower.y > HEIGHT - 175 ? "alignBottom" : ""}`}
+                style={{
+                  left: `${(selectedTower.x / WIDTH) * 100}%`,
+                  top: `${(selectedTower.y / HEIGHT) * 100}%`,
+                  "--quick-accent": selectedSpec.color,
+                } as React.CSSProperties}
+                role="dialog"
+                aria-label={`${selectedSpec.name}升级面板`}
+              >
+                <button
+                  className="quickClose"
+                  onClick={() => chooseBuiltTower(null)}
+                  aria-label="关闭炮塔升级面板"
+                >
+                  ×
+                </button>
+                <div className="quickTowerTitle">
+                  <TowerIcon kind={selectedTower.kind} mini />
+                  <div><small>已选炮塔</small><b>{selectedSpec.name} · {selectedTower.level} 级</b></div>
+                </div>
+                {selectedTower.level === 1 && (
+                  <button
+                    className="quickUpgradeButton"
+                    onClick={upgradeSelected}
+                    disabled={ui.gold < upgradeCost}
+                  >
+                    <span>强化至 2 级</span><b>◈ {upgradeCost}</b>
+                  </button>
+                )}
+                {selectedTower.level === 2 && !selectedTower.specialization && (
+                  <div className="quickBranches">
+                    <span>选择三级专精 · 每项 ◈ {upgradeCost}</span>
+                    {SPECIALIZATIONS[selectedTower.kind].map((branch) => (
+                      <button
+                        key={branch.id}
+                        onClick={() => specializeSelected(branch.id)}
+                        disabled={ui.gold < upgradeCost}
+                      >
+                        <b>{branch.name}</b><small>{branch.description}</small>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {selectedTower.level === 3 && selectedSpecialization && (
+                  <div className="quickComplete">
+                    <span>专精完成</span><b>{selectedSpecialization.name}</b>
+                  </div>
+                )}
+                <button className="quickSellButton" onClick={sellSelected}>
+                  回收 +{Math.round(selectedTower.spent * 0.65)}
+                </button>
+              </div>
+            )}
             {toast && <div className="toast" role="status">{toast}</div>}
             {ui.wave === 0 && gameRef.current.towers.length === 0 && (
               <div className="firstHint" aria-hidden="true">
                 <span>01</span>
-                <p><b>选择防御塔</b>点击道路两侧的方形部署点</p>
+                <p><b>选择防御塔</b>点击道路两侧的圆角部署点</p>
               </div>
             )}
             {(ui.won || ui.lost) && (
@@ -3152,7 +3158,7 @@ export default function Home() {
         </aside>
       </div>
 
-      <footer className="siteFooter">
+        <footer className="siteFooter">
         <span>{saveStatus === "unavailable" ? "游客模式 · 存档不可用" : "游客模式 · 本机自动存档"}</span>
         <p>{finalWave === null ? "守住核心，挑战尽可能多的敌袭。" : `守住核心，撑过 ${finalWave} 波敌袭。`}</p>
         <button onClick={resetGame}>重置战局 ↻</button>
