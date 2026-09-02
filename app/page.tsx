@@ -850,7 +850,7 @@ export default function Home() {
   const activeLevelRef = useRef<LevelConfig>(LEVELS[0]);
   const activeRulesRef = useRef<RuleSet>(LEVELS[0].rules);
   const gameRef = useRef<Game>(createGame(LEVELS[0].rules));
-  const selectedKindRef = useRef<TowerKind | null>("pulse");
+  const selectedKindRef = useRef<TowerKind | null>(null);
   const selectedTowerRef = useRef<number | null>(null);
   const hoverRef = useRef<Point | null>(null);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -869,9 +869,9 @@ export default function Home() {
     level: LEVELS[0],
     rules: LEVELS[0].rules,
   });
-  const [selectedKind, setSelectedKind] = useState<TowerKind | null>("pulse");
+  const [buildMenuPad, setBuildMenuPad] = useState<{ id: string; point: Point } | null>(null);
   const [selectedTowerId, setSelectedTowerId] = useState<number | null>(null);
-  const [toast, setToast] = useState("先请植物伙伴入场，再迎接小虫");
+  const [toast, setToast] = useState("点击一块空地，再挑选植物伙伴");
   const [ui, setUi] = useState<UiState>(() => toUi(gameRef.current));
   const [guestSave, setGuestSave] = useState<GuestSave>(() => createEmptyGuestSave());
   const [saveStatus, setSaveStatus] = useState<"loading" | "ready" | "unavailable">("loading");
@@ -957,13 +957,13 @@ export default function Home() {
     gameRef.current = createGame(rules);
     resultRecordedRef.current = false;
     hoverRef.current = null;
-    selectedKindRef.current = "pulse";
+    selectedKindRef.current = null;
     selectedTowerRef.current = null;
-    setSelectedKind("pulse");
+    setBuildMenuPad(null);
     setSelectedTowerId(null);
     setActiveMission({ category, title, level, rules });
     setUi(toUi(gameRef.current));
-    setToast("先请植物伙伴入场，再迎接小虫");
+    setToast("点击一块空地，再挑选植物伙伴");
     battleOriginRef.current = screenRef.current;
     battleCanGoBackRef.current = false;
     battleReadyRef.current = true;
@@ -1055,9 +1055,9 @@ export default function Home() {
     gameRef.current = restoredGame;
     resultRecordedRef.current = false;
     hoverRef.current = null;
-    selectedKindRef.current = "pulse";
+    selectedKindRef.current = null;
     selectedTowerRef.current = null;
-    setSelectedKind("pulse");
+    setBuildMenuPad(null);
     setSelectedTowerId(null);
     setActiveMission({
       category: restoredCategory,
@@ -1102,25 +1102,18 @@ export default function Home() {
     toastTimerRef.current = setTimeout(() => setToast(""), 2600);
   };
 
-  const chooseTower = (kind: TowerKind) => {
-    selectedKindRef.current = kind;
-    selectedTowerRef.current = null;
-    setSelectedKind(kind);
-    setSelectedTowerId(null);
-  };
-
   const chooseBuiltTower = (id: number | null) => {
     selectedTowerRef.current = id;
     selectedKindRef.current = null;
     setSelectedTowerId(id);
-    setSelectedKind(null);
+    setBuildMenuPad(null);
   };
 
   const canPlace = (point: Point) => {
     return !gameRef.current.towers.some((tower) => distance(point, tower) < 1);
   };
 
-  const handleBuildPad = (point: Point) => {
+  const handleBuildPad = (id: string, point: Point) => {
     const existing = gameRef.current.towers.find(
       (tower) => distance(point, tower) < 1,
     );
@@ -1129,13 +1122,21 @@ export default function Home() {
       return;
     }
 
-    const kind = selectedKindRef.current;
-    if (!kind || gameRef.current.won || gameRef.current.lost) {
+    if (gameRef.current.won || gameRef.current.lost) {
       chooseBuiltTower(null);
       return;
     }
+    selectedTowerRef.current = null;
+    selectedKindRef.current = null;
+    setSelectedTowerId(null);
+    setBuildMenuPad((current) => current?.id === id ? null : { id, point });
+    hoverRef.current = point;
+  };
+
+  const placeTower = (point: Point, kind: TowerKind) => {
     const spec = TOWERS[kind];
     if (!canPlace(point)) {
+      setBuildMenuPad(null);
       showToast("这里已经有伙伴啦，请换一块空地");
       return;
     }
@@ -1158,6 +1159,9 @@ export default function Home() {
       priority: DEFAULT_PRIORITY[kind],
       specialization: null,
     });
+    selectedKindRef.current = null;
+    hoverRef.current = null;
+    setBuildMenuPad(null);
     syncUi();
     showToast(`${spec.name}来帮忙啦`);
   };
@@ -1229,7 +1233,10 @@ export default function Home() {
     gameRef.current = createGame(activeRulesRef.current);
     resultRecordedRef.current = false;
     hoverRef.current = null;
-    chooseTower("pulse");
+    selectedKindRef.current = null;
+    selectedTowerRef.current = null;
+    setBuildMenuPad(null);
+    setSelectedTowerId(null);
     syncUi();
     showToast("果园已经收拾好，重新摆放伙伴吧");
   };
@@ -1315,7 +1322,10 @@ export default function Home() {
     const refund = Math.round(tower.spent * 0.65);
     gameRef.current.gold += refund;
     gameRef.current.stats.towersSold += 1;
-    chooseTower(tower.kind);
+    selectedTowerRef.current = null;
+    selectedKindRef.current = null;
+    setSelectedTowerId(null);
+    setBuildMenuPad(null);
     syncUi();
     showToast(`伙伴回花圃休息了，收回露珠 ${refund}`);
   };
@@ -1325,9 +1335,6 @@ export default function Home() {
       if (screen !== "game") return;
       if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement)
         return;
-      if (event.key === "1") chooseTower("pulse");
-      if (event.key === "2") chooseTower("frost");
-      if (event.key === "3") chooseTower("rail");
       if (event.key.toLowerCase() === "a" && !event.repeat) toggleAutoWave();
       if (event.key.toLowerCase() === "q" && !event.repeat) activateEmp();
       if (event.code === "Space") {
@@ -2949,7 +2956,7 @@ export default function Home() {
           </section>
         )}
 
-        <footer className="menuFooter"><span>ORCHARD GUARD // BUILD 07.1</span><span>游客档案仅保存在当前设备</span></footer>
+        <footer className="menuFooter"><span>ORCHARD GUARD // BUILD 07.2</span><span>游客档案仅保存在当前设备</span></footer>
       </main>
     );
   }
@@ -3078,7 +3085,7 @@ export default function Home() {
               <span>果园小路</span>
               <b>{activeMission.level.name}</b>
             </div>
-            <p>选择植物伙伴后点击小路两侧的空地 · 点击伙伴立即成长</p>
+            <p>点击小路两侧的空地选择植物 · 点击已种下的伙伴立即成长</p>
           </div>
           <div className="canvasWrap">
             <canvas
@@ -3098,13 +3105,13 @@ export default function Home() {
                 const tower = gameRef.current.towers.find(
                   (item) => distance(point, item) < 1,
                 );
-                const affordable = selectedKind ? ui.gold >= TOWERS[selectedKind].cost : true;
+                const choosing = buildMenuPad?.id === id;
                 return (
                   <button
                     type="button"
                     key={id}
                     data-pad={id}
-                    className={`buildPad ${tower ? "occupied" : ""} ${!affordable ? "unaffordable" : ""}`}
+                    className={`buildPad ${tower ? "occupied" : ""} ${choosing ? "choosing" : ""}`}
                     style={{
                       left: `${(point.x / WIDTH) * 100}%`,
                       top: `${(point.y / HEIGHT) * 100}%`,
@@ -3119,7 +3126,9 @@ export default function Home() {
                     onBlur={() => {
                       hoverRef.current = null;
                     }}
-                    onClick={() => handleBuildPad(point)}
+                    onClick={() => handleBuildPad(id, point)}
+                    aria-expanded={choosing}
+                    aria-controls={choosing ? "pad-plant-menu" : undefined}
                     aria-label={
                       tower
                         ? `空地 ${id}，已有${TOWERS[tower.kind].name}`
@@ -3131,6 +3140,63 @@ export default function Home() {
                 );
               })}
             </div>
+            {buildMenuPad && !ui.won && !ui.lost && (
+              <div
+                id="pad-plant-menu"
+                className={`padPlantMenu ${buildMenuPad.point.x > WIDTH * .56 ? "alignRight" : ""} ${buildMenuPad.point.y < 190 ? "alignTop" : ""} ${buildMenuPad.point.y > HEIGHT - 190 ? "alignBottom" : ""}`}
+                style={{
+                  left: `${(buildMenuPad.point.x / WIDTH) * 100}%`,
+                  top: `${(buildMenuPad.point.y / HEIGHT) * 100}%`,
+                }}
+                role="dialog"
+                aria-label={`空地 ${buildMenuPad.id} 的植物选择`}
+              >
+                <div className="padPlantMenuHeader">
+                  <div><small>空地 {buildMenuPad.id}</small><b>种下哪位伙伴？</b></div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      selectedKindRef.current = null;
+                      hoverRef.current = null;
+                      setBuildMenuPad(null);
+                    }}
+                    aria-label="关闭植物选择"
+                  >×</button>
+                </div>
+                <div className="padPlantChoices">
+                  {(Object.keys(TOWERS) as TowerKind[]).map((kind) => {
+                    const tower = TOWERS[kind];
+                    const affordable = ui.gold >= tower.cost;
+                    const preview = () => {
+                      selectedKindRef.current = kind;
+                      hoverRef.current = buildMenuPad.point;
+                    };
+                    const stopPreview = () => {
+                      selectedKindRef.current = null;
+                    };
+                    return (
+                      <button
+                        type="button"
+                        key={kind}
+                        className={`padPlantChoice ${!affordable ? "dim" : ""}`}
+                        onPointerEnter={preview}
+                        onPointerLeave={stopPreview}
+                        onFocus={preview}
+                        onBlur={stopPreview}
+                        onClick={() => placeTower(buildMenuPad.point, kind)}
+                        disabled={!affordable}
+                        aria-label={affordable ? `种下${tower.name}，需要 ${tower.cost} 露珠` : `${tower.name}，露珠不足`}
+                      >
+                        <TowerIcon kind={kind} mini />
+                        <span><b>{tower.name}</b><small>{tower.tagline}</small></span>
+                        <strong><i>◈</i>{tower.cost}</strong>
+                      </button>
+                    );
+                  })}
+                </div>
+                <p>当前拥有 <b>◈ {ui.gold}</b> 露珠</p>
+              </div>
+            )}
             {selectedTower && selectedSpec && !ui.won && !ui.lost && (
               <div
                 className={`towerQuickPanel ${selectedTower.x > WIDTH * 0.56 ? "alignRight" : ""} ${selectedTower.y < 175 ? "alignTop" : ""} ${selectedTower.y > HEIGHT - 175 ? "alignBottom" : ""}`}
@@ -3190,7 +3256,7 @@ export default function Home() {
             {ui.wave === 0 && gameRef.current.towers.length === 0 && (
               <div className="firstHint" aria-hidden="true">
                 <span>01</span>
-                <p><b>选择植物伙伴</b>点击小路两侧的圆角空地</p>
+                <p><b>先点击一块空地</b>再从弹出的菜单选择植物伙伴</p>
               </div>
             )}
             {(ui.won || ui.lost) && (
@@ -3238,25 +3304,25 @@ export default function Home() {
             <b>{gameRef.current.towers.length.toString().padStart(2, "0")}</b>
           </div>
 
+          <p className="towerRosterHint">这里可以查看伙伴；种植时直接点击地图空地选择。</p>
+
           <div className="towerList">
-            {(Object.keys(TOWERS) as TowerKind[]).map((kind, index) => {
+            {(Object.keys(TOWERS) as TowerKind[]).map((kind) => {
               const tower = TOWERS[kind];
               const affordable = ui.gold >= tower.cost;
               return (
-                <button
+                <div
                   key={kind}
-                  className={`towerCard ${selectedKind === kind ? "selected" : ""} ${!affordable ? "dim" : ""}`}
-                  onClick={() => chooseTower(kind)}
-                  aria-pressed={selectedKind === kind}
+                  className={`towerCard ${!affordable ? "dim" : ""}`}
+                  aria-label={`${tower.name}，${tower.tagline}，需要 ${tower.cost} 露珠`}
                 >
-                  <span className="hotkey">{index + 1}</span>
                   <TowerIcon kind={kind} />
                   <span className="towerCopy">
                     <b>{tower.name}</b>
                     <small>{tower.tagline}</small>
                   </span>
                   <span className="price"><i>◈</i>{tower.cost}</span>
-                </button>
+                </div>
               );
             })}
           </div>

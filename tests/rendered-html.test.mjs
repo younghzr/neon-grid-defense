@@ -31,7 +31,7 @@ test("server-renders the Chinese game lobby", async () => {
   const html = await response.text();
   assert.match(html, /<html lang="zh-CN">/);
   assert.match(html, /<title>果园守卫队｜温暖可爱的中文塔防小游戏<\/title>/);
-  assert.match(html, /BUILD 07\.1/);
+  assert.match(html, /BUILD 07\.2/);
   assert.match(html, /开始巡园/);
   assert.match(html, /趣味挑战/);
   assert.doesNotMatch(html, /果园伙伴册|果园访客册|BUG BOOK/);
@@ -59,6 +59,8 @@ test("ships the expanded tower-defense systems and social metadata", async () =>
   assert.match(page, /const WIDTH = 720/);
   assert.match(page, /const HEIGHT = 900/);
   assert.match(page, /towerQuickPanel/);
+  assert.match(page, /padPlantMenu/);
+  assert.match(page, /种下哪位伙伴/);
   assert.match(css, /\.waveIntel/);
   assert.match(css, /\.specializationPicker/);
   assert.match(css, /\.battleReport/);
