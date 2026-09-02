@@ -34,12 +34,12 @@ const SCREEN_HASH: Record<Screen, string> = {
 };
 
 const SCREEN_TITLES: Record<Screen, string> = {
-  home: "霓虹防线｜指挥大厅",
-  campaign: "战役地图｜霓虹防线",
-  modes: "特殊模式｜霓虹防线",
-  arsenal: "炮塔档案｜霓虹防线",
-  codex: "敌情档案｜霓虹防线",
-  game: "核心保卫战｜霓虹防线",
+  home: "果园守卫队｜果园小屋",
+  campaign: "果园地图｜果园守卫队",
+  modes: "趣味挑战｜果园守卫队",
+  arsenal: "植物伙伴｜果园守卫队",
+  codex: "小虫图鉴｜果园守卫队",
+  game: "果篮保卫战｜果园守卫队",
 };
 
 const getScreenFromHash = (hash: string): Screen => {
@@ -271,66 +271,66 @@ const makeRules = (overrides: Partial<RuleSet> = {}): RuleSet => ({
 const LEVELS: LevelConfig[] = [
   {
     id: 1,
-    name: "河岸数据港",
-    sector: "第 07 区",
-    description: "标准折线路线，适合熟悉三类防御塔。",
+    name: "晨露菜畦",
+    sector: "第一块小田",
+    description: "清晨的小路很平缓，适合认识三位植物伙伴。",
     difficulty: "普通",
-    accent: "#8fdde3",
+    accent: "#8ebf77",
     path: pointList([[-40, 150], [160, 150], [160, 310], [400, 310], [400, 150], [640, 150], [640, 470], [800, 470], [800, 310], [1000, 310]]),
     pads: padList([["A1", 80, 70], ["A2", 80, 230], ["B1", 240, 230], ["B2", 320, 230], ["B3", 320, 390], ["C1", 480, 70], ["C2", 480, 230], ["C3", 560, 230], ["D1", 720, 230], ["D2", 560, 390], ["D3", 720, 390], ["D4", 720, 550], ["E1", 880, 230], ["E2", 880, 390]]),
     rules: makeRules({ finalWave: 6, initialGold: 250, enemyHealth: 0.92, enemySpeed: 0.96, waveBonus: 1.12 }),
   },
   {
     id: 2,
-    name: "双湾转运站",
-    sector: "第 12 区",
-    description: "两次深入折返，弯道火力覆盖尤其重要。",
+    name: "河边果摊",
+    sector: "第二块小田",
+    description: "小路绕着果摊折返，在弯道旁摆放伙伴更有效。",
     difficulty: "普通+",
-    accent: "#91c9e6",
+    accent: "#78aeb0",
     path: pointList([[-40, 150], [240, 150], [240, 470], [480, 470], [480, 230], [720, 230], [720, 470], [1000, 470]]),
     pads: padList([["A1", 80, 70], ["A2", 160, 230], ["B1", 320, 230], ["B2", 160, 390], ["B3", 320, 390], ["C1", 400, 550], ["C2", 560, 390], ["C3", 560, 150], ["D1", 640, 310], ["D2", 800, 310], ["D3", 800, 390], ["E1", 880, 550]]),
     rules: makeRules({ finalWave: 7, initialGold: 240, enemyHealth: 0.98, enemyCount: 1.04, waveBonus: 1.05 }),
   },
   {
     id: 3,
-    name: "中央回路",
-    sector: "第 18 区",
-    description: "敌人反复穿越中央区域，部署位竞争激烈。",
+    name: "苹果树下",
+    sector: "第三块小田",
+    description: "小虫会绕着苹果树来回走，中央位置很抢手。",
     difficulty: "进阶",
-    accent: "#b4a4dd",
+    accent: "#c49779",
     path: pointList([[-40, 310], [160, 310], [160, 150], [400, 150], [400, 470], [640, 470], [640, 230], [800, 230], [800, 390], [1000, 390]]),
     pads: padList([["A1", 80, 230], ["A2", 240, 230], ["B1", 320, 70], ["B2", 320, 310], ["B3", 480, 230], ["B4", 480, 390], ["C1", 560, 550], ["C2", 720, 550], ["C3", 560, 310], ["D1", 720, 150], ["D2", 880, 310], ["D3", 880, 470]]),
     rules: makeRules({ finalWave: 8, initialGold: 230, enemyHealth: 1.05, enemySpeed: 1.03, enemyCount: 1.08 }),
   },
   {
     id: 4,
-    name: "北岸折返",
-    sector: "第 23 区",
-    description: "长距离纵向推进，重装单位将更频繁出现。",
+    name: "南瓜田埂",
+    sector: "第四块小田",
+    description: "长长的田埂通向果篮，厚壳甲虫会越来越多。",
     difficulty: "困难",
-    accent: "#e4bd84",
+    accent: "#e2a45f",
     path: pointList([[-40, 470], [160, 470], [160, 230], [400, 230], [400, 70], [640, 70], [640, 310], [880, 310], [880, 150], [1000, 150]]),
     pads: padList([["A1", 80, 390], ["A2", 240, 390], ["B1", 80, 230], ["B2", 240, 150], ["B3", 320, 310], ["C1", 480, 150], ["C2", 560, 150], ["C3", 720, 150], ["D1", 560, 310], ["D2", 720, 390], ["D3", 800, 230], ["E1", 920, 70]]),
     rules: makeRules({ finalWave: 9, initialGold: 215, lives: 10, enemyHealth: 1.12, enemySpeed: 1.06, enemyCount: 1.12, tankWave: 2, waveBonus: 0.94 }),
   },
   {
     id: 5,
-    name: "矩阵峡谷",
-    sector: "第 31 区",
-    description: "长直线与急弯交替，疾行单位会成群来袭。",
+    name: "山坡果园",
+    sector: "第五块小田",
+    description: "山路忽直忽弯，跳跳蚤会结伴跑来。",
     difficulty: "专家",
-    accent: "#dda0c2",
+    accent: "#d98770",
     path: pointList([[-40, 150], [240, 150], [240, 310], [480, 310], [480, 470], [720, 470], [720, 150], [1000, 150]]),
     pads: padList([["A1", 80, 70], ["A2", 160, 230], ["B1", 320, 230], ["B2", 400, 390], ["C1", 560, 390], ["C2", 640, 550], ["C3", 800, 550], ["D1", 640, 310], ["D2", 800, 310], ["E1", 800, 70], ["E2", 880, 230]]),
     rules: makeRules({ finalWave: 10, initialGold: 205, lives: 9, enemyHealth: 1.2, enemySpeed: 1.1, enemyCount: 1.16, spawnRate: 0.9, runnerWave: 1, tankWave: 2, waveBonus: 0.88 }),
   },
   {
     id: 6,
-    name: "核心迷城",
-    sector: "第 42 区",
-    description: "最终防区。资源紧缺，混合敌群持续施压。",
+    name: "老屋后院",
+    sector: "第六块小田",
+    description: "最后一篮水果就在屋后，各种小虫都会来凑热闹。",
     difficulty: "噩梦",
-    accent: "#df918e",
+    accent: "#b36f58",
     path: pointList([[-40, 310], [160, 310], [160, 70], [400, 70], [400, 230], [640, 230], [640, 470], [880, 470], [880, 310], [1000, 310]]),
     pads: padList([["A1", 80, 230], ["A2", 240, 150], ["B1", 320, 150], ["B2", 480, 150], ["C1", 560, 310], ["C2", 720, 310], ["C3", 560, 390], ["D1", 720, 550], ["D2", 800, 390], ["E1", 920, 230]]),
     rules: makeRules({ finalWave: 12, initialGold: 195, lives: 8, enemyHealth: 1.3, enemySpeed: 1.14, enemyCount: 1.22, spawnRate: 0.84, runnerWave: 1, tankWave: 2, waveBonus: 0.8 }),
@@ -340,32 +340,64 @@ const LEVELS: LevelConfig[] = [
 const MODES: ModeConfig[] = [
   {
     id: "survival",
-    name: "无尽生存",
-    badge: "无尽",
-    description: "没有最终波次，敌人会持续变强。挑战你的最高分。",
+    name: "无尽巡园",
+    badge: "慢慢守",
+    description: "没有最后一群，小虫会越来越多。看看你能守多久。",
     levelId: 3,
-    accent: "#8bcaae",
+    accent: "#91c987",
     rules: makeRules({ finalWave: null, initialGold: 245, enemyCount: 1.08, spawnRate: 0.9, waveBonus: 0.95 }),
   },
   {
     id: "blitz",
-    name: "闪电战",
-    badge: "极速",
-    description: "六波高密度快攻。资源充足，但思考时间很少。",
+    name: "阵雨抢收",
+    badge: "赶时间",
+    description: "阵雨前连续守住六群小虫。露珠充足，但准备时间很短。",
     levelId: 2,
-    accent: "#8fdde3",
+    accent: "#78aeb0",
     rules: makeRules({ finalWave: 6, initialGold: 310, lives: 8, enemyHealth: 0.96, enemySpeed: 1.3, enemyCount: 1.2, spawnRate: 0.58, waveBonus: 0.9, runnerWave: 1, tankWave: 2 }),
   },
   {
     id: "hardcore",
-    name: "硬核协议",
-    badge: "3 核心",
-    description: "只有三点核心耐久，敌人更强，补给更少。",
+    name: "三果挑战",
+    badge: "3 个水果",
+    description: "果篮里只剩三个水果，小虫更强，收集到的露珠也更少。",
     levelId: 6,
-    accent: "#dd8b9e",
+    accent: "#dc826d",
     rules: makeRules({ finalWave: 10, initialGold: 190, lives: 3, enemyHealth: 1.38, enemySpeed: 1.14, enemyCount: 1.25, spawnRate: 0.82, waveBonus: 0.68, runnerWave: 1, tankWave: 2 }),
   },
 ];
+
+const LEGACY_TITLES_BY_NEW: Record<string, string> = {
+  晨露菜畦: "河岸数据港",
+  河边果摊: "双湾转运站",
+  苹果树下: "中央回路",
+  南瓜田埂: "北岸折返",
+  山坡果园: "矩阵峡谷",
+  老屋后院: "核心迷城",
+  无尽巡园: "无尽生存",
+  阵雨抢收: "闪电战",
+  三果挑战: "硬核协议",
+};
+
+const CURRENT_TITLES_BY_LEGACY = Object.fromEntries(
+  Object.entries(LEGACY_TITLES_BY_NEW).map(([current, legacy]) => [legacy, current]),
+) as Record<string, string>;
+
+const getGuestRecord = (
+  records: Record<string, GuestRecord>,
+  category: string,
+  title: string,
+) => {
+  const legacyCategory = category === "果园故事"
+    ? "战役模式"
+    : category === "趣味挑战"
+      ? "特殊模式"
+      : category;
+  const legacyTitle = LEGACY_TITLES_BY_NEW[title] ?? title;
+  return records[`${category}:${title}`]
+    ?? records[`${legacyCategory}:${legacyTitle}`]
+    ?? records[`${legacyCategory}:${title}`];
+};
 
 const TOWERS: Record<
   TowerKind,
@@ -382,36 +414,36 @@ const TOWERS: Record<
   }
 > = {
   pulse: {
-    name: "脉冲塔",
-    tagline: "均衡 · 高频",
+    name: "蓝莓投手",
+    tagline: "灵活 · 连发",
     cost: 70,
     range: 142,
     damage: 20,
     rate: 0.62,
     projectileSpeed: 520,
-    color: "#8fdde3",
+    color: "#9271bd",
     slow: 0,
   },
   frost: {
-    name: "冷凝塔",
-    tagline: "减速 · 控场",
+    name: "薄荷喷壶",
+    tagline: "清凉 · 减速",
     cost: 95,
     range: 124,
     damage: 10,
     rate: 0.88,
     projectileSpeed: 410,
-    color: "#b4a4dd",
+    color: "#6fb69a",
     slow: 0.58,
   },
   rail: {
-    name: "轨道炮",
-    tagline: "远程 · 重击",
+    name: "栗子大炮",
+    tagline: "远投 · 重击",
     cost: 145,
     range: 225,
     damage: 78,
     rate: 1.92,
     projectileSpeed: 760,
-    color: "#e4bd84",
+    color: "#d59a56",
     slow: 0,
   },
 };
@@ -436,8 +468,8 @@ const ENEMY_PROFILES: Record<
   }
 > = {
   drone: {
-    name: "巡航体",
-    shortName: "巡",
+    name: "小叶虫",
+    shortName: "叶",
     hp: 72,
     speed: 53,
     reward: 13,
@@ -446,12 +478,12 @@ const ENEMY_PROFILES: Record<
     armor: 0,
     shieldRatio: 0,
     slowResistance: 0,
-    color: "#dce7f3",
-    description: "属性均衡的基础单位。",
+    color: "#91ad62",
+    description: "最常见的小虫，走得不快也不慢。",
   },
   runner: {
-    name: "疾行体",
-    shortName: "疾",
+    name: "跳跳蚤",
+    shortName: "跳",
     hp: 38,
     speed: 92,
     reward: 10,
@@ -460,12 +492,12 @@ const ENEMY_PROFILES: Record<
     armor: 0,
     shieldRatio: 0,
     slowResistance: 0,
-    color: "#dda0c2",
-    description: "生命较低但速度很快，优先减速。",
+    color: "#df8a72",
+    description: "个头很小却跑得飞快，最好先让它慢下来。",
   },
   tank: {
-    name: "重装体",
-    shortName: "重",
+    name: "厚壳甲虫",
+    shortName: "壳",
     hp: 210,
     speed: 35,
     reward: 28,
@@ -474,12 +506,12 @@ const ENEMY_PROFILES: Record<
     armor: 0.2,
     shieldRatio: 0,
     slowResistance: 0.12,
-    color: "#df918e",
-    description: "拥有 20% 装甲；轨道炮可无视装甲。",
+    color: "#a56f52",
+    description: "硬壳能挡住部分伤害；栗子大炮可以敲开它。",
   },
   shield: {
-    name: "护盾体",
-    shortName: "盾",
+    name: "圆壳蜗牛",
+    shortName: "蜗",
     hp: 92,
     speed: 46,
     reward: 21,
@@ -488,12 +520,12 @@ const ENEMY_PROFILES: Record<
     armor: 0,
     shieldRatio: 0.72,
     slowResistance: 0.08,
-    color: "#91c9e6",
-    description: "携带能量盾；脉冲塔对护盾额外增伤。",
+    color: "#78aaa0",
+    description: "圆圆的壳会先挡下伤害；蓝莓籽更容易敲碎它。",
   },
   support: {
-    name: "修复体",
-    shortName: "修",
+    name: "花粉虫",
+    shortName: "粉",
     hp: 84,
     speed: 43,
     reward: 24,
@@ -502,12 +534,12 @@ const ENEMY_PROFILES: Record<
     armor: 0,
     shieldRatio: 0,
     slowResistance: 0,
-    color: "#8bcaae",
-    description: "周期修复附近受损单位，应尽快击破。",
+    color: "#d6ae62",
+    description: "会给附近的小虫送花粉点心，应该优先赶走。",
   },
   boss: {
-    name: "主宰母舰",
-    shortName: "首",
+    name: "贪吃毛毛虫",
+    shortName: "王",
     hp: 0,
     speed: 28,
     reward: 0,
@@ -516,8 +548,8 @@ const ENEMY_PROFILES: Record<
     armor: 0.12,
     shieldRatio: 0.35,
     slowResistance: 0.55,
-    color: "#e4bd84",
-    description: "首领单位。低生命时会进入狂暴状态。",
+    color: "#d18455",
+    description: "果园里最贪吃的大家伙，饿急了会跑得更快。",
   },
 };
 
@@ -538,41 +570,41 @@ const SPECIALIZATIONS: Record<
   Array<{ id: TowerSpecialization; name: string; description: string }>
 > = {
   pulse: [
-    { id: "pulse_chain", name: "链式回路", description: "命中后弹射 1 个目标，造成 55% 伤害" },
-    { id: "pulse_overdrive", name: "高频核心", description: "射速提高 25%，射程缩短 10%" },
+    { id: "pulse_chain", name: "弹跳果籽", description: "命中后再弹向 1 只小虫，造成 55% 伤害" },
+    { id: "pulse_overdrive", name: "熟透蓝莓", description: "投掷速度提高 25%，距离缩短 10%" },
   ],
   frost: [
-    { id: "frost_zero", name: "绝对零域", description: "减速更强，持续时间延长至 2.1 秒" },
-    { id: "frost_brittle", name: "脆化协议", description: "减速目标受到其他塔额外伤害" },
+    { id: "frost_zero", name: "冰凉薄荷", description: "清凉效果更强，持续时间延长至 2.1 秒" },
+    { id: "frost_brittle", name: "清晨露水", description: "被淋湿的小虫会受到伙伴额外伤害" },
   ],
   rail: [
-    { id: "rail_pierce", name: "贯穿弹芯", description: "继续打击附近第 2 个目标，造成 60% 伤害" },
-    { id: "rail_mark", name: "破甲标记", description: "标记 3 秒，使后续伤害提高" },
+    { id: "rail_pierce", name: "双响栗子", description: "继续砸中附近第 2 只小虫，造成 60% 伤害" },
+    { id: "rail_mark", name: "裂壳果仁", description: "留下 3 秒裂壳记号，使后续伤害提高" },
   ],
 };
 
 const TOWER_TACTICS: Record<TowerKind, { role: string; placement: string }> = {
   pulse: {
-    role: "稳定清理轻型单位，并快速击穿能量护盾。",
-    placement: "适合放在连续弯道内侧，让双联炮管获得更长输出时间。",
+    role: "稳定赶走普通小虫，并快速敲开蜗牛圆壳。",
+    placement: "适合摆在连续弯道内侧，让蓝莓籽能多打几次。",
   },
   frost: {
-    role: "压低敌群速度，为其他炮塔创造集中火力窗口。",
-    placement: "优先覆盖入口或长直道，目标策略建议选择“最快”。",
+    role: "用清凉薄荷水放慢虫群，给其他伙伴留出时间。",
+    placement: "优先照顾小路入口或长直道，目标建议选择“最快”。",
   },
   rail: {
-    role: "远距离重击重装与首领单位，可无视敌方装甲。",
-    placement: "放在视野开阔的后排部署盘，避免射程被短路段浪费。",
+    role: "从远处抛出大栗子，专门对付厚壳甲虫和大毛毛虫。",
+    placement: "摆在视野开阔的后排空地，别让它的远投距离浪费。",
   },
 };
 
 const ENEMY_COUNTERS: Record<EnemyKind, string> = {
-  drone: "用脉冲塔建立基础交叉火力。",
-  runner: "冷凝塔设为“最快”，优先压制高速突破。",
-  tank: "轨道炮无视装甲，适合设置为“最强”。",
-  shield: "脉冲伤害对护盾额外有效，先破盾再集火。",
-  support: "会修复附近单位，应在队伍中段前优先击破。",
-  boss: "保留 EMP，利用专精炮塔持续集中输出。",
+  drone: "用蓝莓投手在弯道旁组成交叉投掷。",
+  runner: "薄荷喷壶设为“最快”，优先淋湿跳跳蚤。",
+  tank: "栗子大炮能敲开硬壳，适合设置为“最强”。",
+  shield: "蓝莓籽敲圆壳更有效，先碎壳再一起赶走。",
+  support: "花粉虫会喂饱伙伴，应该在队伍中段前优先赶走。",
+  boss: "留好驱虫铃，让三位植物伙伴持续集中攻击。",
 };
 
 const createEnemyCounts = (): EnemyCounts => ({
@@ -629,12 +661,12 @@ const getWavePlan = (wave: number, rules: RuleSet): WavePlan => {
 };
 
 const getWaveTip = (counts: EnemyCounts) => {
-  if (counts.boss > 0) return "首领来袭：保留 EMP，并用轨道炮集中火力。";
-  if (counts.support > 0) return "修复体将治疗友军，尽早在前段建立交叉火力。";
-  if (counts.shield > 0) return "护盾单位出现：脉冲塔能更快击穿能量盾。";
-  if (counts.runner >= Math.max(2, counts.tank * 2)) return "疾行单位较多：冷凝塔设置“最快”效果更佳。";
-  if (counts.tank > 0) return "重装单位拥有装甲：轨道炮可造成完整伤害。";
-  return "均衡敌群：让不同防御塔覆盖同一处弯道。";
+  if (counts.boss > 0) return "大毛毛虫来了：留好驱虫铃，并用栗子大炮集中招呼它。";
+  if (counts.support > 0) return "花粉虫会喂饱同伴，尽早在小路前段把它赶走。";
+  if (counts.shield > 0) return "圆壳蜗牛出现：蓝莓投手能更快敲开它的壳。";
+  if (counts.runner >= Math.max(2, counts.tank * 2)) return "跳跳蚤很多：让薄荷喷壶优先照顾“最快”的小虫。";
+  if (counts.tank > 0) return "厚壳甲虫来了：栗子大炮可以造成完整伤害。";
+  return "普通虫群：让不同植物伙伴一起照顾同一个弯道。";
 };
 
 const getTowerRange = (tower: Tower) =>
@@ -832,14 +864,14 @@ export default function Home() {
   const announcedScreenRef = useRef<Screen | null>(null);
   const [screen, setScreen] = useState<Screen>("home");
   const [activeMission, setActiveMission] = useState<ActiveMission>({
-    category: "战役模式",
+    category: "果园故事",
     title: LEVELS[0].name,
     level: LEVELS[0],
     rules: LEVELS[0].rules,
   });
   const [selectedKind, setSelectedKind] = useState<TowerKind | null>("pulse");
   const [selectedTowerId, setSelectedTowerId] = useState<number | null>(null);
-  const [toast, setToast] = useState("先部署防御塔，再启动敌袭");
+  const [toast, setToast] = useState("先请植物伙伴入场，再迎接小虫");
   const [ui, setUi] = useState<UiState>(() => toUi(gameRef.current));
   const [guestSave, setGuestSave] = useState<GuestSave>(() => createEmptyGuestSave());
   const [saveStatus, setSaveStatus] = useState<"loading" | "ready" | "unavailable">("loading");
@@ -931,7 +963,7 @@ export default function Home() {
     setSelectedTowerId(null);
     setActiveMission({ category, title, level, rules });
     setUi(toUi(gameRef.current));
-    setToast("先部署防御塔，再启动敌袭");
+    setToast("先请植物伙伴入场，再迎接小虫");
     battleOriginRef.current = screenRef.current;
     battleCanGoBackRef.current = false;
     battleReadyRef.current = true;
@@ -1012,6 +1044,12 @@ export default function Home() {
       projectiles: [],
       particles: [],
     };
+    const restoredCategory = session.category === "战役模式"
+      ? "果园故事"
+      : session.category === "特殊模式"
+        ? "趣味挑战"
+        : session.category;
+    const restoredTitle = CURRENT_TITLES_BY_LEGACY[session.title] ?? session.title;
     activeLevelRef.current = level;
     activeRulesRef.current = session.rules;
     gameRef.current = restoredGame;
@@ -1022,8 +1060,8 @@ export default function Home() {
     setSelectedKind("pulse");
     setSelectedTowerId(null);
     setActiveMission({
-      category: session.category,
-      title: session.title,
+      category: restoredCategory,
+      title: restoredTitle,
       level,
       rules: session.rules,
     });
@@ -1098,11 +1136,11 @@ export default function Home() {
     }
     const spec = TOWERS[kind];
     if (!canPlace(point)) {
-      showToast("此格不可部署，请选择发光空格");
+      showToast("这里已经有伙伴啦，请换一块空地");
       return;
     }
     if (gameRef.current.gold < spec.cost) {
-      showToast("能量币不足，击破敌人可获得补给");
+      showToast("露珠不够，赶走小虫可以收集更多");
       return;
     }
     gameRef.current.gold -= spec.cost;
@@ -1121,7 +1159,7 @@ export default function Home() {
       specialization: null,
     });
     syncUi();
-    showToast(`${spec.name}已上线`);
+    showToast(`${spec.name}来帮忙啦`);
   };
 
   const startWave = () => {
@@ -1145,8 +1183,8 @@ export default function Home() {
     syncUi();
     showToast(
       plan.hasBoss
-        ? `第 ${game.wave} 波 · 首领“主宰母舰”正在接近`
-        : `第 ${game.wave} 波敌袭已侦测`,
+        ? `第 ${game.wave} 群 · “贪吃毛毛虫”正在靠近`
+        : `第 ${game.wave} 群小虫正沿着小路过来`,
     );
   };
 
@@ -1158,19 +1196,19 @@ export default function Home() {
 
     if (!game.autoWave) {
       game.autoWaveTimer = 0;
-      showToast("自动下一波已关闭");
+      showToast("已关闭自动迎接下一群");
     } else if (game.active) {
       game.autoWaveTimer = 0;
-      showToast("自动下一波已开启，本波结束后自动推进");
+      showToast("已开启自动迎接，这群赶走后继续");
     } else if (
       game.wave > 0 &&
       (rules.finalWave === null || game.wave < rules.finalWave)
     ) {
       game.autoWaveTimer = AUTO_WAVE_DELAY;
-      showToast(`${AUTO_WAVE_DELAY} 秒后自动启动第 ${game.wave + 1} 波`);
+      showToast(`${AUTO_WAVE_DELAY} 秒后迎接第 ${game.wave + 1} 群小虫`);
     } else {
       game.autoWaveTimer = 0;
-      showToast("自动下一波已开启，启动首波后自动推进");
+      showToast("自动迎接已开启，先手动迎接第一群吧");
     }
     syncUi();
   };
@@ -1193,7 +1231,7 @@ export default function Home() {
     hoverRef.current = null;
     chooseTower("pulse");
     syncUi();
-    showToast("防线已重置，重新部署吧");
+    showToast("果园已经收拾好，重新摆放伙伴吧");
   };
 
   const selectedTower = gameRef.current.towers.find(
@@ -1205,7 +1243,7 @@ export default function Home() {
     if (!tower || tower.level >= 2) return;
     const cost = Math.round(TOWERS[tower.kind].cost * (0.45 + tower.level * 0.34));
     if (gameRef.current.gold < cost) {
-      showToast("能量币不足，暂时无法强化");
+      showToast("露珠不够，暂时无法成长");
       return;
     }
     gameRef.current.gold -= cost;
@@ -1213,7 +1251,7 @@ export default function Home() {
     tower.level += 1;
     tower.spent += cost;
     syncUi();
-    showToast(`${TOWERS[tower.kind].name}强化至 ${tower.level} 级`);
+    showToast(`${TOWERS[tower.kind].name}成长到 ${tower.level} 级啦`);
   };
 
   const specializeSelected = (specialization: TowerSpecialization) => {
@@ -1226,7 +1264,7 @@ export default function Home() {
     ) return;
     const cost = Math.round(TOWERS[tower.kind].cost * (0.45 + tower.level * 0.34));
     if (gameRef.current.gold < cost) {
-      showToast("能量币不足，暂时无法完成专精");
+      showToast("露珠不够，暂时无法长出新能力");
       return;
     }
     const branch = SPECIALIZATIONS[tower.kind].find((item) => item.id === specialization)!;
@@ -1265,7 +1303,7 @@ export default function Home() {
     game.empPulseUntil = game.elapsed + 0.65;
     game.stats.skillsUsed += 1;
     syncUi();
-    showToast(`全域 EMP 已释放，干扰 ${targets.length} 个目标`);
+    showToast(`驱虫铃响啦，定住了 ${targets.length} 只小虫`);
   };
 
   const sellSelected = () => {
@@ -1279,7 +1317,7 @@ export default function Home() {
     gameRef.current.stats.towersSold += 1;
     chooseTower(tower.kind);
     syncUi();
-    showToast(`已回收，返还能量币 ${refund}`);
+    showToast(`伙伴回花圃休息了，收回露珠 ${refund}`);
   };
 
   useEffect(() => {
@@ -1455,7 +1493,7 @@ export default function Home() {
               game.lost = true;
               game.active = false;
               game.autoWaveTimer = 0;
-              showToast("核心失守——调整布防后再试一次");
+              showToast("果篮被搬空啦——重新摆好伙伴再试一次");
             }
             break;
           }
@@ -1651,14 +1689,14 @@ export default function Home() {
           game.won = true;
           game.autoWaveTimer = 0;
           game.score += game.lives * 400;
-          showToast("全部敌袭已清除，黎明属于我们");
+          showToast("所有小虫都回家啦，今天的果篮守住了");
         } else if (game.autoWave) {
           game.autoWaveTimer = AUTO_WAVE_DELAY;
           showToast(
-            `第 ${game.wave} 波清除，补给 +${bonus} · ${AUTO_WAVE_DELAY} 秒后自动启动第 ${game.wave + 1} 波`,
+            `第 ${game.wave} 群赶走，露珠 +${bonus} · ${AUTO_WAVE_DELAY} 秒后迎接第 ${game.wave + 1} 群`,
           );
         } else {
-          showToast(`第 ${game.wave} 波清除，补给 +${bonus}`);
+          showToast(`第 ${game.wave} 群赶走，收集露珠 +${bonus}`);
         }
       }
     };
@@ -1672,9 +1710,9 @@ export default function Home() {
 
     const drawBackdrop = (game: Game) => {
       const gradient = ctx.createLinearGradient(0, 0, WIDTH, HEIGHT);
-      gradient.addColorStop(0, "#101a2d");
-      gradient.addColorStop(0.52, "#17253a");
-      gradient.addColorStop(1, "#102136");
+      gradient.addColorStop(0, "#b9d990");
+      gradient.addColorStop(0.52, "#91c17b");
+      gradient.addColorStop(1, "#74aa72");
       ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
@@ -1684,12 +1722,12 @@ export default function Home() {
           const x = 15 + column * 180;
           const y = 13 + row * 150;
           roundedRect(ctx, x, y, 150, 124, 28);
-          ctx.fillStyle = (row + column) % 2 === 0 ? "rgba(67, 88, 116, .09)" : "rgba(10, 20, 35, .1)";
+          ctx.fillStyle = (row + column) % 2 === 0 ? "rgba(255, 247, 203, .09)" : "rgba(64, 112, 62, .08)";
           ctx.fill();
-          ctx.strokeStyle = "rgba(169, 191, 220, .04)";
+          ctx.strokeStyle = "rgba(250, 244, 204, .08)";
           ctx.lineWidth = 1;
           ctx.stroke();
-          ctx.fillStyle = "rgba(160, 186, 217, .065)";
+          ctx.fillStyle = "rgba(73, 116, 61, .15)";
           [[16, 16], [134, 16], [16, 108], [134, 108]].forEach(([dx, dy]) => {
             ctx.beginPath();
             ctx.arc(x + dx, y + dy, 1.5, 0, Math.PI * 2);
@@ -1697,7 +1735,7 @@ export default function Home() {
           });
         }
       }
-      ctx.strokeStyle = "rgba(171, 195, 225, .025)";
+      ctx.strokeStyle = "rgba(70, 112, 59, .055)";
       ctx.lineWidth = 1;
       for (let x = 0; x <= WIDTH; x += 180) {
         ctx.beginPath();
@@ -1712,9 +1750,28 @@ export default function Home() {
         ctx.stroke();
       }
 
+      const blossoms: Array<[number, number, string]> = [
+        [52, 92, "#f6e4a0"], [650, 122, "#f0b7a2"], [84, 286, "#f4c96d"],
+        [626, 352, "#ead8a0"], [53, 508, "#e6a493"], [665, 572, "#f5dfa0"],
+        [94, 730, "#f0c779"], [620, 806, "#e7a1a0"], [360, 848, "#f3db91"],
+      ];
+      blossoms.forEach(([x, y, color]) => {
+        for (let petal = 0; petal < 5; petal += 1) {
+          const angle = (petal / 5) * Math.PI * 2;
+          ctx.beginPath();
+          ctx.arc(x + Math.cos(angle) * 6, y + Math.sin(angle) * 6, 3.5, 0, Math.PI * 2);
+          ctx.fillStyle = color;
+          ctx.fill();
+        }
+        ctx.beginPath();
+        ctx.arc(x, y, 3, 0, Math.PI * 2);
+        ctx.fillStyle = "#8c7142";
+        ctx.fill();
+      });
+
       const vignette = ctx.createRadialGradient(WIDTH / 2, HEIGHT / 2, 170, WIDTH / 2, HEIGHT / 2, 600);
       vignette.addColorStop(0, "rgba(0, 0, 0, 0)");
-      vignette.addColorStop(1, "rgba(3, 9, 21, .48)");
+      vignette.addColorStop(1, "rgba(35, 75, 41, .22)");
       ctx.fillStyle = vignette;
       ctx.fillRect(0, 0, WIDTH, HEIGHT);
       ctx.restore();
@@ -1722,8 +1779,8 @@ export default function Home() {
       ctx.save();
       ctx.globalAlpha = 0.12 + Math.sin(game.elapsed * 0.7) * 0.025;
       const glow = ctx.createRadialGradient(WIDTH * 0.52, HEIGHT * 0.45, 0, WIDTH * 0.52, HEIGHT * 0.45, 330);
-      glow.addColorStop(0, "rgba(113, 186, 199, .3)");
-      glow.addColorStop(1, "rgba(113, 186, 199, 0)");
+      glow.addColorStop(0, "rgba(255, 225, 131, .45)");
+      glow.addColorStop(1, "rgba(255, 225, 131, 0)");
       ctx.fillStyle = glow;
       ctx.fillRect(0, 0, WIDTH, HEIGHT);
       ctx.restore();
@@ -1736,17 +1793,17 @@ export default function Home() {
       ctx.lineJoin = "round";
 
       const layers: Array<{ width: number; color: string; blur?: number }> = [
-        { width: 94, color: "rgba(4, 10, 21, .35)", blur: 18 },
-        { width: 86, color: "#111c2c" },
-        { width: 78, color: "#53647a" },
-        { width: 70, color: "#293a51" },
-        { width: 62, color: "#354b63" },
+        { width: 94, color: "rgba(62, 68, 39, .28)", blur: 16 },
+        { width: 86, color: "#725b42" },
+        { width: 78, color: "#dbc397" },
+        { width: 70, color: "#b99669" },
+        { width: 62, color: "#cba978" },
       ];
       layers.forEach((layer) => {
         traceActivePath();
         ctx.strokeStyle = layer.color;
         ctx.lineWidth = layer.width;
-        ctx.shadowColor = layer.blur ? "rgba(0, 0, 0, .7)" : "transparent";
+        ctx.shadowColor = layer.blur ? "rgba(65, 64, 38, .42)" : "transparent";
         ctx.shadowBlur = layer.blur ?? 0;
         ctx.shadowOffsetY = layer.blur ? 7 : 0;
         ctx.stroke();
@@ -1755,7 +1812,7 @@ export default function Home() {
       ctx.shadowOffsetY = 0;
 
       traceActivePath();
-      ctx.strokeStyle = "rgba(191, 215, 232, .19)";
+      ctx.strokeStyle = "rgba(255, 242, 202, .4)";
       ctx.lineWidth = 1;
       ctx.setLineDash([2, 9]);
       ctx.stroke();
@@ -1763,7 +1820,7 @@ export default function Home() {
       traceActivePath();
       ctx.setLineDash([14, 22]);
       ctx.lineDashOffset = -game.elapsed * 20;
-      ctx.strokeStyle = "rgba(154, 211, 217, .52)";
+      ctx.strokeStyle = "rgba(245, 224, 169, .62)";
       ctx.lineWidth = 2;
       ctx.stroke();
       ctx.setLineDash([]);
@@ -1771,12 +1828,12 @@ export default function Home() {
       path.slice(1, -1).forEach((point) => {
         ctx.beginPath();
         ctx.arc(point.x, point.y, 38, 0, Math.PI * 2);
-        ctx.strokeStyle = "rgba(174, 195, 220, .14)";
+        ctx.strokeStyle = "rgba(112, 78, 49, .2)";
         ctx.lineWidth = 1.5;
         ctx.stroke();
         ctx.beginPath();
         ctx.arc(point.x, point.y, 32, 0, Math.PI * 2);
-        ctx.strokeStyle = "rgba(8, 16, 29, .34)";
+        ctx.strokeStyle = "rgba(255, 235, 191, .18)";
         ctx.stroke();
       });
       ctx.restore();
@@ -1789,22 +1846,22 @@ export default function Home() {
         ctx.translate(point.x, point.y);
         ctx.beginPath();
         ctx.ellipse(0, 12, 29, 14, 0, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(3, 8, 18, .48)";
+        ctx.fillStyle = "rgba(65, 73, 40, .3)";
         ctx.fill();
         roundedRect(ctx, -27, -21, 54, 42, 14);
-        ctx.fillStyle = occupied ? "#1a283c" : "rgba(26, 40, 59, .86)";
+        ctx.fillStyle = occupied ? "#80704f" : "rgba(221, 207, 164, .9)";
         ctx.fill();
-        ctx.strokeStyle = occupied ? "rgba(151, 210, 216, .34)" : "rgba(156, 182, 210, .23)";
+        ctx.strokeStyle = occupied ? "rgba(75, 108, 55, .48)" : "rgba(95, 120, 65, .46)";
         ctx.lineWidth = 1.5;
         ctx.stroke();
         ctx.beginPath();
         ctx.arc(0, 0, 17, 0, Math.PI * 2);
-        ctx.strokeStyle = "rgba(166, 195, 222, .14)";
+        ctx.strokeStyle = "rgba(96, 116, 65, .35)";
         ctx.stroke();
         [[-19, -10], [19, -10], [-19, 10], [19, 10]].forEach(([x, y]) => {
           ctx.beginPath();
           ctx.arc(x, y, 1.6, 0, Math.PI * 2);
-          ctx.fillStyle = "rgba(190, 210, 230, .32)";
+          ctx.fillStyle = "rgba(100, 125, 67, .48)";
           ctx.fill();
         });
         ctx.translate(-point.x, -point.y);
@@ -1830,17 +1887,17 @@ export default function Home() {
       const spec = TOWERS[tower.kind];
       ctx.beginPath();
       ctx.ellipse(0, 14, 28, 12, 0, 0, Math.PI * 2);
-      ctx.fillStyle = "rgba(2, 7, 16, .54)";
+      ctx.fillStyle = "rgba(61, 65, 35, .35)";
       ctx.fill();
       roundedRect(ctx, -25, -22, 50, 44, 14);
-      ctx.fillStyle = "#17253a";
+      ctx.fillStyle = "#82684a";
       ctx.fill();
       ctx.lineWidth = selected ? 2.2 : 1.5;
-      ctx.strokeStyle = selected ? spec.color : "#53647b";
+      ctx.strokeStyle = selected ? spec.color : "#5f784e";
       ctx.stroke();
       ctx.beginPath();
       ctx.arc(0, 0, 14.5, 0, Math.PI * 2);
-      ctx.fillStyle = "#23344d";
+      ctx.fillStyle = "#4f6b42";
       ctx.fill();
       ctx.strokeStyle = `${spec.color}75`;
       ctx.lineWidth = 1.4;
@@ -1869,7 +1926,7 @@ export default function Home() {
       if (selected) drawTowerRange(tower);
       ctx.lineCap = "round";
       ctx.lineJoin = "round";
-      ctx.shadowColor = "rgba(3, 8, 18, .42)";
+      ctx.shadowColor = "rgba(56, 65, 35, .38)";
       ctx.shadowBlur = 12;
       ctx.shadowOffsetY = 5;
       drawTowerBase(tower, selected);
@@ -1882,16 +1939,23 @@ export default function Home() {
       if (tower.kind === "pulse") {
         ctx.beginPath();
         ctx.arc(-1, 0, 12, 0, Math.PI * 2);
-        ctx.fillStyle = "#2c4058";
+        ctx.fillStyle = "#725796";
         ctx.fill();
         ctx.strokeStyle = `${spec.color}8c`;
         ctx.lineWidth = 1.6;
         ctx.stroke();
         [-5, 5].forEach((y) => {
           roundedRect(ctx, 6, y - 3, 30, 6, 3);
-          ctx.fillStyle = "#1c2b40";
+          ctx.fillStyle = "#496b3e";
           ctx.fill();
         });
+        ctx.save();
+        ctx.rotate(-0.55);
+        ctx.beginPath();
+        ctx.ellipse(-8, -12, 7, 3.5, 0, 0, Math.PI * 2);
+        ctx.fillStyle = "#7eaa57";
+        ctx.fill();
+        ctx.restore();
         ctx.beginPath();
         ctx.arc(-1, 0, 6.8, 0, Math.PI * 2);
         ctx.fillStyle = spec.color;
@@ -1900,13 +1964,13 @@ export default function Home() {
       } else if (tower.kind === "frost") {
         ctx.beginPath();
         ctx.arc(0, 0, 12.5, 0, Math.PI * 2);
-        ctx.fillStyle = "#373c61";
+        ctx.fillStyle = "#4f8667";
         ctx.fill();
         ctx.strokeStyle = `${spec.color}aa`;
         ctx.lineWidth = 1.8;
         ctx.stroke();
         roundedRect(ctx, 5, -7, 31, 14, 7);
-        ctx.fillStyle = "#514e7b";
+        ctx.fillStyle = "#d6dfac";
         ctx.fill();
         roundedRect(ctx, 12, -3, 24, 6, 3);
         ctx.globalAlpha = pulse;
@@ -1915,17 +1979,17 @@ export default function Home() {
         ctx.globalAlpha = 1;
         ctx.beginPath();
         ctx.arc(0, 0, 6, 0, Math.PI * 2);
-        ctx.fillStyle = "#e2dcf7";
+        ctx.fillStyle = "#eff4ce";
         ctx.fill();
       } else {
         roundedRect(ctx, -14, -11, 28, 22, 9);
-        ctx.fillStyle = "#354053";
+        ctx.fillStyle = "#8a5d3d";
         ctx.fill();
         ctx.strokeStyle = `${spec.color}86`;
         ctx.lineWidth = 1.6;
         ctx.stroke();
         roundedRect(ctx, 2, -6, 43, 12, 6);
-        ctx.fillStyle = "#182638";
+        ctx.fillStyle = "#68472f";
         ctx.fill();
         roundedRect(ctx, 8, -2, 37, 4, 2);
         ctx.fillStyle = spec.color;
@@ -1934,7 +1998,7 @@ export default function Home() {
         ctx.globalAlpha = 1;
         ctx.beginPath();
         ctx.arc(-4, 0, 5, 0, Math.PI * 2);
-        ctx.fillStyle = "#ffe6b6";
+        ctx.fillStyle = "#f4d89b";
         ctx.fill();
       }
       if (tower.level === 3) {
@@ -1970,7 +2034,7 @@ export default function Home() {
       ctx.shadowOffsetY = 3;
       ctx.beginPath();
       ctx.ellipse(-2, 8, enemy.radius * 0.95, enemy.radius * 0.46, 0, 0, Math.PI * 2);
-      ctx.fillStyle = "rgba(2, 7, 16, .46)";
+      ctx.fillStyle = "rgba(55, 64, 34, .28)";
       ctx.fill();
 
       if (enemy.kind === "boss") {
@@ -1978,47 +2042,47 @@ export default function Home() {
         ctx.rotate(-gameRef.current.elapsed * 0.55);
         ctx.beginPath();
         ctx.arc(0, 0, 34, 0, Math.PI * 2);
-        ctx.strokeStyle = enemy.hp / enemy.maxHp < 0.35 ? "#df918e" : `${color}98`;
+        ctx.strokeStyle = enemy.hp / enemy.maxHp < 0.35 ? "#db755d" : `${color}98`;
         ctx.lineWidth = 3;
         ctx.stroke();
         ctx.restore();
         roundedRect(ctx, -27, -21, 54, 42, 18);
-        ctx.fillStyle = "#45394d";
+        ctx.fillStyle = "#718b48";
         ctx.fill();
         ctx.strokeStyle = color;
         ctx.lineWidth = 3;
         ctx.stroke();
         ctx.beginPath();
         ctx.arc(5, 0, 11, 0, Math.PI * 2);
-        ctx.fillStyle = enemy.hp / enemy.maxHp < 0.35 ? "#df918e" : color;
+        ctx.fillStyle = enemy.hp / enemy.maxHp < 0.35 ? "#db755d" : color;
         ctx.globalAlpha = 0.82 + Math.sin(gameRef.current.elapsed * 5) * 0.12;
         ctx.fill();
         ctx.globalAlpha = 1;
         roundedRect(ctx, -20, -3, 13, 6, 3);
-        ctx.fillStyle = "rgba(241, 221, 178, .72)";
+        ctx.fillStyle = "rgba(94, 59, 35, .72)";
         ctx.fill();
       } else if (enemy.kind === "shield") {
         ctx.beginPath();
         ctx.arc(-2, 0, 16, 0, Math.PI * 2);
-        ctx.fillStyle = "#263b50";
+        ctx.fillStyle = "#c59b66";
         ctx.fill();
         ctx.strokeStyle = color;
         ctx.lineWidth = 2;
         ctx.stroke();
         roundedRect(ctx, 6, -11, 13, 22, 7);
-        ctx.fillStyle = "#315067";
+        ctx.fillStyle = "#7f9d58";
         ctx.fill();
         if (enemy.shield > 0) {
           ctx.beginPath();
           ctx.arc(-1, 0, 23 + Math.sin(gameRef.current.elapsed * 5 + enemy.id), -1.2, 1.2);
-          ctx.strokeStyle = "rgba(145, 201, 230, .78)";
+          ctx.strokeStyle = "rgba(236, 219, 164, .9)";
           ctx.lineWidth = 3;
           ctx.stroke();
         }
       } else if (enemy.kind === "support") {
         ctx.beginPath();
         ctx.arc(0, 0, 17, 0, Math.PI * 2);
-        ctx.fillStyle = "#29443f";
+        ctx.fillStyle = "#d2a64f";
         ctx.fill();
         ctx.strokeStyle = color;
         ctx.lineWidth = 2;
@@ -2030,18 +2094,18 @@ export default function Home() {
         ctx.fill();
         ctx.beginPath();
         ctx.arc(0, 0, 22 + Math.sin(gameRef.current.elapsed * 3 + enemy.id), 0, Math.PI * 2);
-        ctx.strokeStyle = "rgba(139, 202, 174, .25)";
+        ctx.strokeStyle = "rgba(245, 219, 126, .38)";
         ctx.lineWidth = 2;
         ctx.stroke();
       } else if (enemy.kind === "runner") {
-        ctx.strokeStyle = "rgba(221, 160, 194, .28)";
+        ctx.strokeStyle = "rgba(138, 88, 57, .3)";
         ctx.lineWidth = 3;
         ctx.beginPath();
         ctx.moveTo(-25, 0);
         ctx.lineTo(-15, 0);
         ctx.stroke();
         roundedRect(ctx, -16, -10, 34, 20, 10);
-        ctx.fillStyle = "#342d48";
+        ctx.fillStyle = "#9f5e49";
         ctx.fill();
         ctx.strokeStyle = color;
         ctx.lineWidth = 2;
@@ -2052,13 +2116,13 @@ export default function Home() {
         ctx.fill();
       } else if (enemy.kind === "tank") {
         roundedRect(ctx, -21, -15, 42, 30, 11);
-        ctx.fillStyle = "#4a3441";
+        ctx.fillStyle = "#76513c";
         ctx.fill();
         ctx.strokeStyle = color;
         ctx.lineWidth = 2.5;
         ctx.stroke();
         roundedRect(ctx, -7, -8, 19, 16, 7);
-        ctx.fillStyle = "#291f2c";
+        ctx.fillStyle = "#51382c";
         ctx.fill();
         roundedRect(ctx, 6, -3, 17, 6, 3);
         ctx.fillStyle = color;
@@ -2066,17 +2130,17 @@ export default function Home() {
       } else {
         ctx.beginPath();
         ctx.arc(0, 0, 15, 0, Math.PI * 2);
-        ctx.fillStyle = "#273549";
+        ctx.fillStyle = "#69894d";
         ctx.fill();
         ctx.strokeStyle = color;
         ctx.lineWidth = 2;
         ctx.stroke();
         roundedRect(ctx, 7, -7, 13, 14, 7);
-        ctx.fillStyle = "#34465c";
+        ctx.fillStyle = "#89a65f";
         ctx.fill();
         ctx.beginPath();
         ctx.arc(3, 0, 5.5, 0, Math.PI * 2);
-        ctx.fillStyle = "#dd8b9e";
+        ctx.fillStyle = "#f2d780";
         ctx.fill();
       }
 
@@ -2084,24 +2148,24 @@ export default function Home() {
         ctx.globalAlpha = 0.86;
         ctx.beginPath();
         ctx.arc(0, 0, enemy.radius + 6 + Math.sin(gameRef.current.elapsed * 5) * 1.5, 0, Math.PI * 2);
-        ctx.strokeStyle = "#b4a4dd";
+        ctx.strokeStyle = "#8ac4a0";
         ctx.lineWidth = 2;
         ctx.stroke();
         [0, 2.1, 4.2].forEach((a) => {
           const x = Math.cos(a) * (enemy.radius + 5);
           const y = Math.sin(a) * (enemy.radius + 5);
           polygonPath(ctx, [{ x, y: y - 3 }, { x: x + 2, y }, { x, y: y + 3 }, { x: x - 2, y }]);
-          ctx.fillStyle = "#d8d0f2";
+          ctx.fillStyle = "#d8efd2";
           ctx.fill();
         });
       }
       if (stunned) {
         ctx.beginPath();
         ctx.arc(0, 0, enemy.radius + 10, -Math.PI * 0.75, Math.PI * 0.68);
-        ctx.strokeStyle = "#8fdde3";
+        ctx.strokeStyle = "#efc56b";
         ctx.lineWidth = 2.4;
         ctx.stroke();
-        ctx.fillStyle = "#dff9fa";
+        ctx.fillStyle = "#fff0b7";
         [-9, 0, 9].forEach((x, index) => {
           ctx.fillRect(x - 1.5, -enemy.radius - 13 - (index % 2) * 3, 3, 6);
         });
@@ -2110,7 +2174,7 @@ export default function Home() {
         ctx.beginPath();
         ctx.arc(0, 0, enemy.radius + 8, 0, Math.PI * 2);
         ctx.setLineDash(brittle ? [2, 5] : [8, 5]);
-        ctx.strokeStyle = brittle ? "rgba(180, 164, 221, .82)" : "rgba(228, 189, 132, .9)";
+        ctx.strokeStyle = brittle ? "rgba(111, 182, 154, .86)" : "rgba(213, 154, 86, .9)";
         ctx.lineWidth = 1.8;
         ctx.stroke();
         ctx.setLineDash([]);
@@ -2122,11 +2186,11 @@ export default function Home() {
       const statusLift = stunned ? 15 : 0;
       const barY = enemy.y - enemy.radius * visualScale - 13 - statusLift;
       roundedRect(ctx, enemy.x - barWidth / 2 - 1, barY - 1, barWidth + 2, 7, 3);
-      ctx.fillStyle = "rgba(9, 15, 27, .9)";
+      ctx.fillStyle = "rgba(61, 62, 35, .76)";
       ctx.fill();
       const health = Math.max(0, enemy.hp / enemy.maxHp);
       roundedRect(ctx, enemy.x - barWidth / 2, barY, barWidth * health, 5, 2.5);
-      ctx.fillStyle = health < 0.35 ? "#dd8b9e" : "#8bcaae";
+      ctx.fillStyle = health < 0.35 ? "#e37a62" : "#7fb166";
       ctx.fill();
       const highlightWidth = Math.max(0, barWidth * health - 4);
       if (highlightWidth > 0) {
@@ -2136,14 +2200,14 @@ export default function Home() {
       if (enemy.maxShield > 0 && enemy.shield > 0) {
         const shieldWidth = barWidth * Math.max(0, enemy.shield / enemy.maxShield);
         roundedRect(ctx, enemy.x - barWidth / 2, barY - 5, shieldWidth, 3, 1.5);
-        ctx.fillStyle = "#91c9e6";
+        ctx.fillStyle = "#ead9a5";
         ctx.fill();
       }
       if (enemy.kind === "boss") {
-        ctx.fillStyle = "#e8cc9d";
+        ctx.fillStyle = "#f3e0a8";
         ctx.font = '800 10px "Microsoft YaHei UI", "PingFang SC", sans-serif';
         ctx.textAlign = "center";
-        ctx.fillText("首领", enemy.x, barY - 8);
+        ctx.fillText("贪吃王", enemy.x, barY - 8);
       }
     };
 
@@ -2161,43 +2225,39 @@ export default function Home() {
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.font = '800 15px "Microsoft YaHei UI", "PingFang SC", sans-serif';
-      roundedRect(ctx, entranceX - 31, 8, 62, 28, 10);
-      ctx.fillStyle = "rgba(19, 43, 58, .88)";
+      roundedRect(ctx, entranceX - 41, 8, 82, 28, 10);
+      ctx.fillStyle = "rgba(75, 104, 55, .86)";
       ctx.fill();
-      ctx.strokeStyle = "rgba(143, 221, 227, .48)";
+      ctx.strokeStyle = "rgba(238, 228, 181, .55)";
       ctx.stroke();
-      ctx.fillStyle = "#b5e4e7";
-      ctx.fillText("入口", entranceX, 22);
+      ctx.fillStyle = "#f7f0cf";
+      ctx.fillText("小虫入口", entranceX, 22);
 
       roundedRect(ctx, coreX - 33, HEIGHT - 94, 66, 28, 10);
-      ctx.fillStyle = "rgba(59, 31, 46, .88)";
+      ctx.fillStyle = "rgba(119, 83, 49, .88)";
       ctx.fill();
-      ctx.strokeStyle = "rgba(221, 139, 158, .48)";
+      ctx.strokeStyle = "rgba(244, 218, 147, .62)";
       ctx.stroke();
-      ctx.fillStyle = "#efb1bd";
-      ctx.fillText("核心", coreX, HEIGHT - 80);
+      ctx.fillStyle = "#fff0bf";
+      ctx.fillText("果篮", coreX, HEIGHT - 80);
 
-      ctx.shadowColor = "#df918e";
-      ctx.shadowBlur = 16;
+      ctx.strokeStyle = "#765033";
+      ctx.lineWidth = 4;
       ctx.beginPath();
-      ctx.arc(coreX, coreNodeY, 28 + Math.sin(game.elapsed * 2.5) * 2, 0, Math.PI * 2);
-      ctx.strokeStyle = "rgba(221, 139, 158, .36)";
+      ctx.arc(coreX, coreNodeY - 7, 18, Math.PI, 0);
+      ctx.stroke();
+      roundedRect(ctx, coreX - 25, coreNodeY - 5, 50, 26, 8);
+      ctx.fillStyle = "#a97646";
+      ctx.fill();
+      ctx.strokeStyle = "#765033";
       ctx.lineWidth = 2;
       ctx.stroke();
-      ctx.shadowBlur = 0;
-      ctx.beginPath();
-      ctx.arc(coreX, coreNodeY, 20, -game.elapsed * 0.55, Math.PI * 1.45 - game.elapsed * 0.55);
-      ctx.strokeStyle = "rgba(237, 165, 177, .86)";
-      ctx.lineWidth = 3.5;
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.arc(coreX, coreNodeY, 11, 0, Math.PI * 2);
-      ctx.fillStyle = "rgba(112, 50, 69, .92)";
-      ctx.fill();
-      ctx.beginPath();
-      ctx.arc(coreX, coreNodeY, 5 + Math.sin(game.elapsed * 4) * 1.5, 0, Math.PI * 2);
-      ctx.fillStyle = "#f0a7b4";
-      ctx.fill();
+      [[-13, -5, "#dc7258"], [0, -8, "#efc552"], [13, -4, "#8fb85d"]].forEach(([dx, dy, color]) => {
+        ctx.beginPath();
+        ctx.arc(coreX + Number(dx), coreNodeY + Number(dy), 8, 0, Math.PI * 2);
+        ctx.fillStyle = String(color);
+        ctx.fill();
+      });
       ctx.restore();
 
       const hover = hoverRef.current;
@@ -2303,22 +2363,22 @@ export default function Home() {
         ctx.globalAlpha = Math.max(0, 0.34 * (1 - progress));
         ctx.beginPath();
         ctx.arc(WIDTH / 2, HEIGHT / 2, radius, 0, Math.PI * 2);
-        ctx.strokeStyle = "#8fdde3";
+        ctx.strokeStyle = "#efc56b";
         ctx.lineWidth = 22 * (1 - progress) + 2;
         ctx.stroke();
-        ctx.fillStyle = "rgba(143, 221, 227, .08)";
+        ctx.fillStyle = "rgba(239, 197, 107, .08)";
         ctx.fillRect(0, 0, WIDTH, HEIGHT);
         ctx.restore();
       }
 
       if (game.paused) {
-        ctx.fillStyle = "rgba(13, 19, 35, .58)";
+        ctx.fillStyle = "rgba(42, 64, 41, .62)";
         ctx.fillRect(0, 0, WIDTH, HEIGHT);
         ctx.textAlign = "center";
         ctx.fillStyle = "#f6f8ff";
         ctx.font = "800 30px ui-sans-serif, system-ui";
         ctx.fillText("战术暂停", WIDTH / 2, HEIGHT / 2 - 8);
-        ctx.fillStyle = "#92a3bd";
+        ctx.fillStyle = "#d2d4b4";
         ctx.font = "500 14px ui-sans-serif, system-ui";
         ctx.fillText("按空格键继续", WIDTH / 2, HEIGHT / 2 + 22);
       }
@@ -2456,7 +2516,11 @@ export default function Home() {
     ) return;
     resultRecordedRef.current = true;
     const key = `${activeMission.category}:${activeMission.title}`;
-    const previous = guestSaveRef.current.records[key] ?? {
+    const previous = getGuestRecord(
+      guestSaveRef.current.records,
+      activeMission.category,
+      activeMission.title,
+    ) ?? {
       bestScore: 0,
       bestWave: 0,
       bestStars: 0,
@@ -2535,16 +2599,16 @@ export default function Home() {
     return (
       <main className="menuShell">
         <header className="menuTopbar">
-          <button className="menuLogo" onClick={() => navigateScreen("home")} aria-label="返回游戏大厅">
+          <button className="menuLogo" onClick={() => navigateScreen("home")} aria-label="返回果园小屋">
             <span className="brandMark" aria-hidden="true"><span /></span>
-            <span><small>NEON GRID</small><b>霓虹防线</b></span>
+            <span><small>ORCHARD GUARD</small><b>果园守卫队</b></span>
           </button>
           <nav aria-label="主菜单">
-            <button className={screen === "home" ? "active" : ""} aria-current={screen === "home" ? "page" : undefined} onClick={() => navigateScreen("home")}>大厅</button>
-            <button className={screen === "campaign" ? "active" : ""} aria-current={screen === "campaign" ? "page" : undefined} onClick={() => navigateScreen("campaign")}>战役</button>
-            <button className={screen === "modes" ? "active" : ""} aria-current={screen === "modes" ? "page" : undefined} onClick={() => navigateScreen("modes")}>模式</button>
-            <button className={screen === "arsenal" ? "active" : ""} aria-current={screen === "arsenal" ? "page" : undefined} onClick={() => navigateScreen("arsenal")}>炮塔</button>
-            <button className={screen === "codex" ? "active" : ""} aria-current={screen === "codex" ? "page" : undefined} onClick={() => navigateScreen("codex")}>敌情</button>
+            <button className={screen === "home" ? "active" : ""} aria-current={screen === "home" ? "page" : undefined} onClick={() => navigateScreen("home")}>小屋</button>
+            <button className={screen === "campaign" ? "active" : ""} aria-current={screen === "campaign" ? "page" : undefined} onClick={() => navigateScreen("campaign")}>果园</button>
+            <button className={screen === "modes" ? "active" : ""} aria-current={screen === "modes" ? "page" : undefined} onClick={() => navigateScreen("modes")}>挑战</button>
+            <button className={screen === "arsenal" ? "active" : ""} aria-current={screen === "arsenal" ? "page" : undefined} onClick={() => navigateScreen("arsenal")}>伙伴</button>
+            <button className={screen === "codex" ? "active" : ""} aria-current={screen === "codex" ? "page" : undefined} onClick={() => navigateScreen("codex")}>小虫</button>
           </nav>
           <span className={`onlineStatus guestModeStatus ${saveStatus}`}>
             <i />
@@ -2556,9 +2620,9 @@ export default function Home() {
           <div className="viewPage homePage">
             <section className="menuHero">
               <div className="heroCopy">
-                <p className="heroKicker"><span>战术系统已升级</span> / 指挥官终端</p>
-                <h1>选择你的防线，<br /><em>守住最后的核心。</em></h1>
-                <p className="heroLead">预判下一波敌军、选择炮塔专精并释放全域 EMP，在首领抵达核心前完成你的霓虹防线。</p>
+                <p className="heroKicker"><span>今天也要好好看园子</span> / 果园小屋</p>
+                <h1>叫上植物伙伴，<br /><em>守住香甜果篮。</em></h1>
+                <p className="heroLead">观察下一群贪吃小虫，摆好蓝莓、薄荷和栗子伙伴，别让刚摘下的水果被它们搬走。</p>
                 {savedSession && (
                   <button className="continueMenuButton" onClick={resumeGuestSession}>
                     <span>
@@ -2570,10 +2634,10 @@ export default function Home() {
                 )}
                 <div className="menuActions">
                   <button className="primaryMenuButton" onClick={() => navigateScreen("campaign")}>
-                    <span>开始战役</span><b>选择战区 →</b>
+                    <span>开始巡园</span><b>选择小路 →</b>
                   </button>
                   <button className="secondaryMenuButton" onClick={() => navigateScreen("modes")}>
-                    特殊模式
+                    趣味挑战
                   </button>
                 </div>
                 <p className="localSaveNote">
@@ -2583,25 +2647,27 @@ export default function Home() {
                     : "；换设备或清理浏览器数据后无法恢复。"}
                 </p>
               </div>
-              <div className="heroRadar" aria-hidden="true">
-                <div className="radarRing ringOne" />
-                <div className="radarRing ringTwo" />
-                <div className="radarCore"><span>07</span><small>防区</small></div>
-                <i className="radarPing pingOne" /><i className="radarPing pingTwo" /><i className="radarPing pingThree" />
+              <div className="heroGarden" aria-hidden="true">
+                <span className="gardenSun" />
+                <div className="fruitBasketArt">
+                  <i className="fruit apple" /><i className="fruit orange" /><i className="fruit pear" />
+                  <span />
+                </div>
+                <p><b>今日果篮</b><small>新鲜采摘 · 等你守护</small></p>
               </div>
             </section>
-            <section className="portalGrid" aria-label="指挥中心入口">
-              <button style={{ "--portal-accent": "#8fdde3" } as React.CSSProperties} onClick={() => navigateScreen("campaign")}>
-                <span className="portalNumber">01</span><i>战</i><strong>战役地图</strong><small>六个独立战区与渐进难度</small><b>选择关卡 →</b>
+            <section className="portalGrid" aria-label="果园小屋入口">
+              <button style={{ "--portal-accent": "#8ebf77" } as React.CSSProperties} onClick={() => navigateScreen("campaign")}>
+                <span className="portalNumber">01</span><i>园</i><strong>果园地图</strong><small>六条小路与慢慢增加的难度</small><b>选择小路 →</b>
               </button>
-              <button style={{ "--portal-accent": "#b4a4dd" } as React.CSSProperties} onClick={() => navigateScreen("modes")}>
-                <span className="portalNumber">02</span><i>模</i><strong>特殊模式</strong><small>无尽、闪电战与硬核协议</small><b>选择协议 →</b>
+              <button style={{ "--portal-accent": "#d98770" } as React.CSSProperties} onClick={() => navigateScreen("modes")}>
+                <span className="portalNumber">02</span><i>趣</i><strong>趣味挑战</strong><small>无尽巡园、阵雨抢收与三果挑战</small><b>挑一个玩法 →</b>
               </button>
-              <button style={{ "--portal-accent": "#e4bd84" } as React.CSSProperties} onClick={() => navigateScreen("arsenal")}>
-                <span className="portalNumber">03</span><i>塔</i><strong>炮塔档案</strong><small>属性、定位与三级专精路线</small><b>查看军械库 →</b>
+              <button style={{ "--portal-accent": "#d59a56" } as React.CSSProperties} onClick={() => navigateScreen("arsenal")}>
+                <span className="portalNumber">03</span><i>苗</i><strong>植物伙伴</strong><small>认识伙伴的能力与成长路线</small><b>翻开伙伴册 →</b>
               </button>
-              <button style={{ "--portal-accent": "#8bcaae" } as React.CSSProperties} onClick={() => navigateScreen("codex")}>
-                <span className="portalNumber">04</span><i>敌</i><strong>敌情档案</strong><small>六类敌军与对应克制策略</small><b>打开图鉴 →</b>
+              <button style={{ "--portal-accent": "#78aaa0" } as React.CSSProperties} onClick={() => navigateScreen("codex")}>
+                <span className="portalNumber">04</span><i>虫</i><strong>小虫图鉴</strong><small>六种小虫和照顾它们的办法</small><b>打开图鉴 →</b>
               </button>
             </section>
           </div>
@@ -2610,19 +2676,19 @@ export default function Home() {
         {screen === "campaign" && (
           <section className="selectionPage viewPage">
             <div className="selectionHeader">
-              <div><p>CAMPAIGN / 战役模式</p><h1>选择战区</h1></div>
-              <span>关卡越靠后，资源更少、敌人更强。</span>
+              <div><p>ORCHARD MAP / 果园地图</p><h1>选择一条小路</h1></div>
+              <span>越往果园深处，露珠越少，小虫也会更难赶走。</span>
             </div>
             <div className="levelGrid">
               {LEVELS.map((level) => {
-                const record = guestSave.records[`战役模式:${level.name}`];
+                const record = getGuestRecord(guestSave.records, "果园故事", level.name);
                 const stars = record?.bestStars ?? 0;
                 return (
                   <button
                     key={level.id}
                     className="levelCard"
                     style={{ "--card-accent": level.accent } as React.CSSProperties}
-                    onClick={() => startMission(level, level.rules, "战役模式", level.name)}
+                    onClick={() => startMission(level, level.rules, "果园故事", level.name)}
                   >
                     <span className="levelTop">
                       <i>{level.id.toString().padStart(2, "0")}</i>
@@ -2634,7 +2700,7 @@ export default function Home() {
                     <span className="levelRoute" aria-hidden="true"><i /><i /><i /><i /><i /></span>
                     <span className="levelCopy"><small>{level.sector}</small><strong>{level.name}</strong><em>{level.description}</em></span>
                     <span className="levelMeta">
-                      <i>{record ? `最高 ${record.bestScore.toLocaleString()} 分` : `${level.pads.length} 个部署点`}</i>
+                      <i>{record ? `最高 ${record.bestScore.toLocaleString()} 分` : `${level.pads.length} 块空地`}</i>
                       <b>{level.rules.finalWave} 波 →</b>
                     </span>
                   </button>
@@ -2647,8 +2713,8 @@ export default function Home() {
         {screen === "modes" && (
           <section className="selectionPage modeSelection viewPage">
             <div className="selectionHeader">
-              <div><p>SPECIAL PROTOCOLS / 特殊模式</p><h1>选择协议</h1></div>
-              <span>打破标准战役规则，用不同策略刷新战绩。</span>
+              <div><p>GARDEN CHALLENGES / 趣味挑战</p><h1>换一种玩法</h1></div>
+              <span>小雨、抢收和有限水果，每次巡园都不太一样。</span>
             </div>
             <div className="modeGrid">
               {MODES.map((mode, index) => {
@@ -2658,7 +2724,7 @@ export default function Home() {
                     key={mode.id}
                     className="modeCard"
                     style={{ "--card-accent": mode.accent } as React.CSSProperties}
-                    onClick={() => startMission(level, mode.rules, "特殊模式", mode.name)}
+                    onClick={() => startMission(level, mode.rules, "趣味挑战", mode.name)}
                   >
                     <span className="modeNumber">0{index + 1}</span>
                     <span className="modeBadge">{mode.badge}</span>
@@ -2666,9 +2732,9 @@ export default function Home() {
                     <p>{mode.description}</p>
                     <span className="modeDetails">
                       <i>地图：{level.name}</i>
-                      <i>{mode.rules.finalWave === null ? "无限波次" : `${mode.rules.finalWave} 波挑战`}</i>
+                      <i>{mode.rules.finalWave === null ? "小虫不断" : `${mode.rules.finalWave} 群挑战`}</i>
                     </span>
-                    <b className="modeLaunch">启动协议 →</b>
+                    <b className="modeLaunch">开始挑战 →</b>
                   </button>
                 );
               })}
@@ -2679,10 +2745,10 @@ export default function Home() {
         {screen === "arsenal" && (
           <section className="selectionPage archivePage viewPage">
             <div className="selectionHeader archiveHeader">
-              <div><p>DEFENSE ARCHIVE / 炮塔档案</p><h1>防御军械库</h1></div>
+              <div><p>PLANT FRIENDS / 植物伙伴</p><h1>果园伙伴册</h1></div>
               <div className="selectionHeaderAside">
-                <span>先了解火力定位与专精路线，再进入战场部署。</span>
-                {savedSession && <button className="archiveResumeButton" onClick={returnToSavedBattle}>← 返回战场</button>}
+                <span>先认识每位伙伴的本领和成长方向，再回到果园摆放。</span>
+                {savedSession && <button className="archiveResumeButton" onClick={returnToSavedBattle}>← 返回果园</button>}
               </div>
             </div>
             <div className="towerArchiveGrid">
@@ -2692,7 +2758,7 @@ export default function Home() {
                   <article key={kind} className="towerArchiveCard" style={{ "--card-accent": tower.color } as React.CSSProperties}>
                     <div className="archiveTowerTop">
                       <span className="archiveTowerVisual"><TowerIcon kind={kind} /></span>
-                      <div><small>{tower.tagline}</small><h2>{tower.name}</h2><b>部署 ◈ {tower.cost}</b></div>
+                      <div><small>{tower.tagline}</small><h2>{tower.name}</h2><b>需要露珠 ◈ {tower.cost}</b></div>
                     </div>
                     <p>{TOWER_TACTICS[kind].role}</p>
                     <div className="archiveMetrics">
@@ -2700,13 +2766,13 @@ export default function Home() {
                       <span><small>攻击范围</small><b>{tower.range}</b></span>
                       <span><small>每秒攻击</small><b>{(1 / tower.rate).toFixed(1)}</b></span>
                     </div>
-                    <div className="archivePlacement"><span>部署建议</span><p>{TOWER_TACTICS[kind].placement}</p></div>
+                    <div className="archivePlacement"><span>摆放建议</span><p>{TOWER_TACTICS[kind].placement}</p></div>
                     <div className="archiveBranches">
                       {SPECIALIZATIONS[kind].map((branch, index) => (
                         <div key={branch.id}><span>路线 {index + 1}</span><b>{branch.name}</b><small>{branch.description}</small></div>
                       ))}
                     </div>
-                    <button className="archiveLaunchButton" onClick={() => navigateScreen("campaign")}>进入战役部署 →</button>
+                    <button className="archiveLaunchButton" onClick={() => navigateScreen("campaign")}>去果园摆放 →</button>
                   </article>
                 );
               })}
@@ -2717,10 +2783,10 @@ export default function Home() {
         {screen === "codex" && (
           <section className="selectionPage archivePage viewPage">
             <div className="selectionHeader archiveHeader">
-              <div><p>THREAT CODEX / 敌情档案</p><h1>敌军图鉴</h1></div>
+              <div><p>BUG BOOK / 小虫图鉴</p><h1>果园访客册</h1></div>
               <div className="selectionHeaderAside">
-                <span>辨认轮廓与能力，提前为下一波调整目标策略。</span>
-                {savedSession && <button className="archiveResumeButton" onClick={returnToSavedBattle}>← 返回战场</button>}
+                <span>认清每种小虫的样子和习惯，下一群到来前更好安排伙伴。</span>
+                {savedSession && <button className="archiveResumeButton" onClick={returnToSavedBattle}>← 返回果园</button>}
               </div>
             </div>
             <div className="enemyArchiveGrid">
@@ -2730,7 +2796,7 @@ export default function Home() {
                   <article key={kind} className={`enemyArchiveCard ${kind}`} style={{ "--card-accent": enemy.color } as React.CSSProperties}>
                     <div className="enemyArchiveTop">
                       <EnemyIcon kind={kind} />
-                      <div><small>{kind === "boss" ? "首领级威胁" : "常规敌军"}</small><h2>{enemy.name}</h2><span>{enemy.shortName}型识别信号</span></div>
+                      <div><small>{kind === "boss" ? "贪吃大家伙" : "常见小虫"}</small><h2>{enemy.name}</h2><span>果园里的“{enemy.shortName}”朋友</span></div>
                     </div>
                     <p>{enemy.description}</p>
                     <div className="enemyMetrics">
@@ -2746,7 +2812,7 @@ export default function Home() {
           </section>
         )}
 
-        <footer className="menuFooter"><span>NEON GRID DEFENSE // BUILD 06.0</span><span>游客档案仅保存在当前设备</span></footer>
+        <footer className="menuFooter"><span>ORCHARD GUARD // BUILD 07.0</span><span>游客档案仅保存在当前设备</span></footer>
       </main>
     );
   }
@@ -2767,14 +2833,14 @@ export default function Home() {
         <div className="stats" aria-label="当前战况">
           <div className="stat">
             <span className="statIcon heart">♥</span>
-            <span><small>核心</small><strong>{ui.lives}</strong></span>
+            <span><small>果篮</small><strong>{ui.lives}</strong></span>
           </div>
           <div className="stat">
             <span className="statIcon coin">◈</span>
-            <span><small>能量币</small><strong>{ui.gold}</strong></span>
+            <span><small>露珠</small><strong>{ui.gold}</strong></span>
           </div>
           <div className="stat waveStat">
-            <span><small>波次</small><strong>{ui.wave} / {finalWave ?? "∞"}</strong></span>
+            <span><small>虫群</small><strong>{ui.wave} / {finalWave ?? "∞"}</strong></span>
           </div>
           <div className="score">
             <small>战绩</small>
@@ -2790,21 +2856,21 @@ export default function Home() {
           <div className="threatCopy">
             <small>
               {ui.active
-                ? `第 ${ui.wave} 波${inspectedPlan.hasBoss ? " · 首领警报" : ""}`
-                : `下一波情报 · 第 ${inspectedWave} 波`}
+                ? `第 ${ui.wave} 群${inspectedPlan.hasBoss ? " · 大毛毛虫" : ""}`
+                : `下一群预告 · 第 ${inspectedWave} 群`}
             </small>
             <strong>
               {ui.won
-                ? "区域安全"
+                ? "果篮安全"
                 : ui.lost
-                  ? "核心离线"
+                  ? "果篮空啦"
                   : ui.active
-                    ? `剩余目标 ${remaining}`
+                    ? `剩余小虫 ${remaining}`
                     : ui.autoWaveTimer > 0
-                      ? `自动推进 · ${Math.ceil(ui.autoWaveTimer)} 秒`
+                      ? `自动迎接 · ${Math.ceil(ui.autoWaveTimer)} 秒`
                       : ui.wave === 0
-                        ? "等待首次部署"
-                        : "波次间歇"}
+                        ? "等待伙伴入场"
+                        : "虫群间歇"}
             </strong>
             <span className="threatProgress" aria-hidden="true">
               <i style={{ width: `${(ui.active ? waveProgress : 0) * 100}%` }} />
@@ -2827,9 +2893,9 @@ export default function Home() {
             className={`autoWaveButton ${ui.autoWave ? "active" : ""}`}
             onClick={toggleAutoWave}
             disabled={ui.won || ui.lost}
-            aria-label={ui.autoWave ? "关闭自动下一波" : "开启自动下一波"}
+            aria-label={ui.autoWave ? "关闭自动迎接下一群" : "开启自动迎接下一群"}
             aria-pressed={ui.autoWave}
-            title="自动下一波（快捷键 A）"
+            title="自动迎接下一群（快捷键 A）"
           >
             <span>自动</span>
             <b>
@@ -2851,10 +2917,10 @@ export default function Home() {
               ui.won ||
               ui.lost
             }
-            aria-label={ui.empCooldown > 0 ? `EMP 冷却 ${Math.ceil(ui.empCooldown)} 秒` : "释放全域 EMP"}
-            title="全域 EMP（快捷键 Q）"
+            aria-label={ui.empCooldown > 0 ? `驱虫铃还要等 ${Math.ceil(ui.empCooldown)} 秒` : "摇响驱虫铃"}
+            title="驱虫铃（快捷键 Q）"
           >
-            <span><kbd>Q</kbd> EMP</span>
+            <span><kbd>Q</kbd> 驱虫铃</span>
             <b>{ui.empCooldown > 0 ? `${Math.ceil(ui.empCooldown)}s` : "就绪"}</b>
           </button>
           <button
@@ -2862,8 +2928,8 @@ export default function Home() {
             onClick={startWave}
             disabled={ui.active || ui.won || ui.lost}
           >
-            <span>{ui.wave === 0 ? "启动敌袭" : finalWave !== null && ui.wave >= finalWave ? "任务完成" : "下一波"}</span>
-            <b>{finalWave === null || ui.wave < finalWave ? `第 ${ui.wave + 1} 波` : "已清除"}</b>
+            <span>{ui.wave === 0 ? "迎接小虫" : finalWave !== null && ui.wave >= finalWave ? "巡园完成" : "下一群"}</span>
+            <b>{finalWave === null || ui.wave < finalWave ? `第 ${ui.wave + 1} 群` : "都赶走啦"}</b>
           </button>
         </div>
       </section>
@@ -2872,10 +2938,10 @@ export default function Home() {
         <section className="arenaPanel">
           <div className="arenaHeader">
             <div>
-              <span>区域地图</span>
+              <span>果园小路</span>
               <b>{activeMission.level.name}</b>
             </div>
-            <p>选择塔后点击道路两侧的部署点 · 点击已部署炮塔立即升级</p>
+            <p>选择植物伙伴后点击小路两侧的空地 · 点击伙伴立即成长</p>
           </div>
           <div className="canvasWrap">
             <canvas
@@ -2886,7 +2952,7 @@ export default function Home() {
               className="placementPads"
               data-testid="placement-pads"
               role="group"
-              aria-label="道路两侧的炮塔部署点"
+              aria-label="小路两侧的植物摆放位置"
               onPointerLeave={() => {
                 hoverRef.current = null;
               }}
@@ -2919,8 +2985,8 @@ export default function Home() {
                     onClick={() => handleBuildPad(point)}
                     aria-label={
                       tower
-                        ? `部署点 ${id}，已部署${TOWERS[tower.kind].name}`
-                        : `部署点 ${id}，可部署`
+                        ? `空地 ${id}，已有${TOWERS[tower.kind].name}`
+                        : `空地 ${id}，可以摆放植物伙伴`
                     }
                   >
                     <span aria-hidden="true">{tower ? tower.level : "+"}</span>
@@ -2937,18 +3003,18 @@ export default function Home() {
                   "--quick-accent": selectedSpec.color,
                 } as React.CSSProperties}
                 role="dialog"
-                aria-label={`${selectedSpec.name}升级面板`}
+                aria-label={`${selectedSpec.name}成长面板`}
               >
                 <button
                   className="quickClose"
                   onClick={() => chooseBuiltTower(null)}
-                  aria-label="关闭炮塔升级面板"
+                  aria-label="关闭植物伙伴成长面板"
                 >
                   ×
                 </button>
                 <div className="quickTowerTitle">
                   <TowerIcon kind={selectedTower.kind} mini />
-                  <div><small>已选炮塔</small><b>{selectedSpec.name} · {selectedTower.level} 级</b></div>
+                  <div><small>已选伙伴</small><b>{selectedSpec.name} · {selectedTower.level} 级</b></div>
                 </div>
                 {selectedTower.level === 1 && (
                   <button
@@ -2956,12 +3022,12 @@ export default function Home() {
                     onClick={upgradeSelected}
                     disabled={ui.gold < upgradeCost}
                   >
-                    <span>强化至 2 级</span><b>◈ {upgradeCost}</b>
+                    <span>成长至 2 级</span><b>◈ {upgradeCost}</b>
                   </button>
                 )}
                 {selectedTower.level === 2 && !selectedTower.specialization && (
                   <div className="quickBranches">
-                    <span>选择三级专精 · 每项 ◈ {upgradeCost}</span>
+                    <span>选择三级本领 · 每项 ◈ {upgradeCost}</span>
                     {SPECIALIZATIONS[selectedTower.kind].map((branch) => (
                       <button
                         key={branch.id}
@@ -2975,11 +3041,11 @@ export default function Home() {
                 )}
                 {selectedTower.level === 3 && selectedSpecialization && (
                   <div className="quickComplete">
-                    <span>专精完成</span><b>{selectedSpecialization.name}</b>
+                    <span>成长完成</span><b>{selectedSpecialization.name}</b>
                   </div>
                 )}
                 <button className="quickSellButton" onClick={sellSelected}>
-                  回收 +{Math.round(selectedTower.spent * 0.65)}
+                  回花圃 +{Math.round(selectedTower.spent * 0.65)}
                 </button>
               </div>
             )}
@@ -2987,13 +3053,13 @@ export default function Home() {
             {ui.wave === 0 && gameRef.current.towers.length === 0 && (
               <div className="firstHint" aria-hidden="true">
                 <span>01</span>
-                <p><b>选择防御塔</b>点击道路两侧的圆角部署点</p>
+                <p><b>选择植物伙伴</b>点击小路两侧的圆角空地</p>
               </div>
             )}
             {(ui.won || ui.lost) && (
               <div className="resultOverlay">
-                <p>{ui.won ? "区域已保卫" : "核心已失守"}</p>
-                <h2>{ui.won ? "黎明已至" : "防线失守"}</h2>
+                <p>{ui.won ? "果园守住啦" : "水果被搬走啦"}</p>
+                <h2>{ui.won ? "今天大丰收" : "明天再来一次"}</h2>
                 {ui.won && (
                   <div className="resultStars" aria-label={`本局获得 ${earnedStars} 星`}>
                     {[1, 2, 3].map((star) => <i key={star} className={star <= earnedStars ? "earned" : ""}>◆</i>)}
@@ -3001,36 +3067,36 @@ export default function Home() {
                 )}
                 <span>
                   {ui.won
-                    ? `最终得分 ${ui.score.toLocaleString()} · 核心完整度 ${ui.lives}/${activeMission.rules.lives}`
-                    : `坚持到第 ${ui.wave} 波 · 最终得分 ${ui.score.toLocaleString()}`}
+                    ? `最终得分 ${ui.score.toLocaleString()} · 剩余水果 ${ui.lives}/${activeMission.rules.lives}`
+                    : `坚持到第 ${ui.wave} 群 · 最终得分 ${ui.score.toLocaleString()}`}
                 </span>
                 <div className="battleReport" aria-label="本局战报">
-                  <span><small>击破</small><b>{ui.stats.kills}</b></span>
+                  <span><small>赶走</small><b>{ui.stats.kills}</b></span>
                   <span><small>总伤害</small><b>{Math.round(ui.stats.damageDealt).toLocaleString()}</b></span>
                   <span><small>漏过</small><b>{ui.stats.leaks}</b></span>
-                  <span><small>EMP</small><b>{ui.stats.skillsUsed}</b></span>
+                  <span><small>摇铃</small><b>{ui.stats.skillsUsed}</b></span>
                 </div>
-                <button onClick={resetGame}>重新部署</button>
+                <button onClick={resetGame}>重新摆放</button>
               </div>
             )}
           </div>
           <div className="arenaFooter">
-            <div className="arenaEnemySummary" aria-label="敌军构成">
+            <div className="arenaEnemySummary" aria-label="小虫组成">
               {ENEMY_ORDER.filter((kind) => intelCounts[kind] > 0).map((kind) => (
                 <span key={kind} className={`enemyTag ${kind}`}>
                   <i />{ENEMY_PROFILES[kind].shortName} ×{intelCounts[kind]}
                 </span>
               ))}
             </div>
-            <em>空格：开始 / 暂停 · A：自动 · Q：EMP</em>
+            <em>空格：开始 / 暂停 · A：自动 · Q：驱虫铃</em>
           </div>
         </section>
 
         <aside className="sidebar">
           <div className="sidebarTitle">
             <div>
-              <span>防御阵列</span>
-              <h2>防御单元</h2>
+              <span>植物花圃</span>
+              <h2>植物伙伴</h2>
             </div>
             <b>{gameRef.current.towers.length.toString().padStart(2, "0")}</b>
           </div>
@@ -3064,7 +3130,7 @@ export default function Home() {
                 <div className="inspectorTop">
                   <TowerIcon kind={selectedTower.kind} mini />
                   <div>
-                    <small>已选单元</small>
+                    <small>已选伙伴</small>
                     <h3>{selectedSpec.name} <em>{selectedTower.level} 级</em></h3>
                   </div>
                 </div>
@@ -3091,7 +3157,7 @@ export default function Home() {
                 {selectedTower.level === 2 && !selectedTower.specialization ? (
                   <>
                     <div className="specializationPicker">
-                      <div className="specializationLabel"><span>三级专精 · 二选一</span><b>◈ {upgradeCost}</b></div>
+                      <div className="specializationLabel"><span>三级本领 · 二选一</span><b>◈ {upgradeCost}</b></div>
                       <div>
                         {SPECIALIZATIONS[selectedTower.kind].map((branch) => (
                           <button key={branch.id} onClick={() => specializeSelected(branch.id)}>
@@ -3101,14 +3167,14 @@ export default function Home() {
                       </div>
                     </div>
                     <button className="sellButton wide" onClick={sellSelected}>
-                      回收单元 +{Math.round(selectedTower.spent * 0.65)}
+                      回花圃 +{Math.round(selectedTower.spent * 0.65)}
                     </button>
                   </>
                 ) : (
                   <>
                     {selectedSpecialization && (
                       <div className="specializationSummary">
-                        <span>已激活专精</span><b>{selectedSpecialization.name}</b><small>{selectedSpecialization.description}</small>
+                        <span>已学会本领</span><b>{selectedSpecialization.name}</b><small>{selectedSpecialization.description}</small>
                       </div>
                     )}
                     <div className="inspectorActions">
@@ -3117,11 +3183,11 @@ export default function Home() {
                         onClick={upgradeSelected}
                         disabled={selectedTower.level >= 2}
                       >
-                        <span>{selectedTower.level >= 3 ? "专精已完成" : "强化至 2 级"}</span>
+                        <span>{selectedTower.level >= 3 ? "成长已完成" : "成长至 2 级"}</span>
                         {selectedTower.level < 2 && <b>◈ {upgradeCost}</b>}
                       </button>
                       <button className="sellButton" onClick={sellSelected}>
-                        回收 +{Math.round(selectedTower.spent * 0.65)}
+                        回花圃 +{Math.round(selectedTower.spent * 0.65)}
                       </button>
                     </div>
                   </>
@@ -3130,15 +3196,15 @@ export default function Home() {
             ) : (
               <div className="emptyInspector">
                 <span>＋</span>
-                <p>点击已部署的防御塔<br />查看升级与回收选项</p>
+                <p>点击已经摆好的植物伙伴<br />查看成长与回花圃选项</p>
               </div>
             )}
           </div>
 
           <div className="waveIntel">
             <div className="waveIntelTitle">
-              <span>{ui.active ? "本波剩余" : "下一波情报"}</span>
-              <b>第 {inspectedWave} 波{inspectedPlan.hasBoss ? " · 首领" : ""}</b>
+              <span>{ui.active ? "本群剩余" : "下一群预告"}</span>
+              <b>第 {inspectedWave} 群{inspectedPlan.hasBoss ? " · 大毛毛虫" : ""}</b>
             </div>
             <div className="waveIntelCounts">
               {ENEMY_ORDER.filter((kind) => intelCounts[kind] > 0).map((kind) => (
@@ -3148,11 +3214,11 @@ export default function Home() {
               ))}
             </div>
             <div className="waveIntelReward">
-              <span>清除补给</span><b>◈ {inspectedPlan.clearBonus}</b>
+              <span>赶走奖励</span><b>◈ {inspectedPlan.clearBonus}</b>
             </div>
             <p>{getWaveTip(intelCounts)}</p>
             <button className="archiveLinkButton" onClick={() => navigateScreen("codex")}>
-              <span>打开完整敌情档案</span><b>新页面 →</b>
+              <span>打开完整小虫图鉴</span><b>新页面 →</b>
             </button>
           </div>
         </aside>
@@ -3160,8 +3226,8 @@ export default function Home() {
 
         <footer className="siteFooter">
         <span>{saveStatus === "unavailable" ? "游客模式 · 存档不可用" : "游客模式 · 本机自动存档"}</span>
-        <p>{finalWave === null ? "守住核心，挑战尽可能多的敌袭。" : `守住核心，撑过 ${finalWave} 波敌袭。`}</p>
-        <button onClick={resetGame}>重置战局 ↻</button>
+        <p>{finalWave === null ? "守住果篮，看看能赶走多少群小虫。" : `守住果篮，迎接 ${finalWave} 群小虫。`}</p>
+        <button onClick={resetGame}>重新摆放 ↻</button>
       </footer>
     </main>
   );

@@ -30,11 +30,11 @@ test("server-renders the Chinese game lobby", async () => {
 
   const html = await response.text();
   assert.match(html, /<html lang="zh-CN">/);
-  assert.match(html, /<title>霓虹防线｜中文塔防小游戏<\/title>/);
-  assert.match(html, /BUILD 06\.0/);
-  assert.match(html, /开始战役/);
-  assert.match(html, /特殊模式/);
-  assert.doesNotMatch(html, /防御军械库|敌军图鉴|THREAT CODEX/);
+  assert.match(html, /<title>果园守卫队｜温暖可爱的中文塔防小游戏<\/title>/);
+  assert.match(html, /BUILD 07\.0/);
+  assert.match(html, /开始巡园/);
+  assert.match(html, /趣味挑战/);
+  assert.doesNotMatch(html, /果园伙伴册|果园访客册|BUG BOOK/);
   assert.doesNotMatch(html, /codex-preview|Your site is taking shape/);
 });
 
@@ -43,19 +43,19 @@ test("ships the expanded tower-defense systems and social metadata", async () =>
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
-    access(new URL("../public/og-v4.png", import.meta.url)),
+    access(new URL("../public/og-orchard.png", import.meta.url)),
   ]);
 
   assert.match(page, /const getWavePlan/);
-  assert.match(page, /主宰母舰/);
+  assert.match(page, /贪吃毛毛虫/);
   assert.match(page, /const activateEmp/);
   assert.match(page, /const SPECIALIZATIONS/);
   assert.match(page, /priority:\s*TargetPriority/);
   assert.match(page, /bestStars/);
   assert.match(page, /const SCREEN_HASH/);
-  assert.match(page, /防御军械库/);
-  assert.match(page, /敌军图鉴/);
-  assert.match(page, /打开完整敌情档案/);
+  assert.match(page, /果园伙伴册/);
+  assert.match(page, /果园访客册/);
+  assert.match(page, /打开完整小虫图鉴/);
   assert.match(page, /const WIDTH = 720/);
   assert.match(page, /const HEIGHT = 900/);
   assert.match(page, /towerQuickPanel/);
@@ -66,6 +66,6 @@ test("ships the expanded tower-defense systems and social metadata", async () =>
   assert.match(css, /\.enemyArchiveGrid/);
   assert.match(css, /aspect-ratio:\s*720 \/ 900/);
   assert.match(css, /\.towerQuickPanel/);
-  assert.match(layout, /og-v4\.png/);
-  assert.match(layout, /炮塔专精/);
+  assert.match(layout, /og-orchard\.png/);
+  assert.match(layout, /植物伙伴/);
 });
