@@ -3815,7 +3815,7 @@ canvas:focus-visible {
   }
 }
 
-/* BUILD 07.0 warm orchard theme */
+/* BUILD 07.1 warm orchard theme */
 .menuShell::before {
   background:
     radial-gradient(circle, rgba(247, 231, 169, .08) 0 2px, transparent 2.5px) 0 0 / 74px 74px;
@@ -4103,6 +4103,217 @@ canvas:focus-visible {
 .towerGlyph-pulse .towerGlyphBarrel,
 .towerGlyph-frost .towerGlyphBarrel,
 .towerGlyph-rail .towerGlyphBarrel { background: #49683f; }
+
+/* BUILD 07.1: plant companions use soft, organic silhouettes instead of machinery. */
+.towerGlyphGround,
+.towerGlyphPlant,
+.towerGlyphAim,
+.towerGlyphFruit {
+  position: absolute;
+  display: block;
+  pointer-events: none;
+}
+
+.towerGlyphGround {
+  left: 7px;
+  bottom: 5px;
+  width: 30px;
+  height: 11px;
+  border: 1px solid rgba(248, 226, 168, .28);
+  border-radius: 50%;
+  background: linear-gradient(180deg, #a27a4d, #715038);
+  box-shadow: 0 4px 7px rgba(31, 44, 27, .24);
+}
+
+.towerGlyphPlant::before,
+.towerGlyphPlant::after,
+.towerGlyphAim::before,
+.towerGlyphAim::after,
+.towerGlyphFruit::before,
+.towerGlyphFruit::after {
+  content: "";
+  position: absolute;
+  display: block;
+}
+
+.towerGlyph-pulse .towerGlyphPlant {
+  left: 10px;
+  bottom: 11px;
+  width: 25px;
+  height: 20px;
+  border-radius: 48% 52% 44% 48%;
+  background: #5e8749;
+  box-shadow: -6px 2px 0 #6e9850, 6px 3px 0 #537c43;
+}
+
+.towerGlyph-pulse .towerGlyphPlant::before,
+.towerGlyph-pulse .towerGlyphPlant::after {
+  top: -5px;
+  width: 13px;
+  height: 7px;
+  border: 1px solid rgba(222, 241, 172, .24);
+  border-radius: 100% 12% 100% 12%;
+  background: #83ad58;
+}
+
+.towerGlyph-pulse .towerGlyphPlant::before {
+  left: 1px;
+  transform: rotate(18deg);
+}
+
+.towerGlyph-pulse .towerGlyphPlant::after {
+  right: 1px;
+  transform: scaleX(-1) rotate(18deg);
+}
+
+.towerGlyph-pulse .towerGlyphAim {
+  left: 25px;
+  top: 14px;
+  width: 14px;
+  height: 7px;
+  border-radius: 100% 12% 100% 12%;
+  background: #78a553;
+  transform: rotate(-22deg);
+}
+
+.towerGlyph-pulse .towerGlyphAim::after {
+  right: -4px;
+  top: 1px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #9b7ac1;
+  box-shadow: inset 2px 2px 0 rgba(255, 248, 231, .48);
+}
+
+.towerGlyph-pulse .towerGlyphFruit {
+  left: 14px;
+  top: 18px;
+  width: 16px;
+  height: 16px;
+  border: 1px solid rgba(61, 48, 75, .42);
+  border-radius: 50%;
+  background: #8564ad;
+  box-shadow: inset 3px 3px 0 rgba(255, 244, 230, .27), -7px 4px 0 #74539d, 7px 5px 0 #9c7bc0;
+}
+
+.towerGlyphFruit::before {
+  left: 4px;
+  top: 7px;
+  width: 2px;
+  height: 2px;
+  border-radius: 50%;
+  background: #394130;
+  box-shadow: 6px 0 0 #394130;
+}
+
+.towerGlyphFruit::after {
+  left: 5px;
+  top: 9px;
+  width: 6px;
+  height: 4px;
+  border-bottom: 1.5px solid #394130;
+  border-radius: 0 0 999px 999px;
+}
+
+.towerGlyph-frost .towerGlyphPlant {
+  left: 10px;
+  top: 16px;
+  width: 24px;
+  height: 14px;
+  border: 1px solid rgba(223, 246, 204, .28);
+  border-radius: 100% 14% 100% 14%;
+  background: #70b17f;
+  transform: rotate(-38deg);
+  box-shadow: 1px 1px 0 #538e67;
+}
+
+.towerGlyph-frost .towerGlyphPlant::after {
+  left: 7px;
+  top: -8px;
+  width: 22px;
+  height: 13px;
+  border: 1px solid rgba(223, 246, 204, .25);
+  border-radius: 14% 100% 14% 100%;
+  background: #83c390;
+  transform: rotate(68deg);
+}
+
+.towerGlyph-frost .towerGlyphAim {
+  left: 25px;
+  top: 14px;
+  width: 15px;
+  height: 8px;
+  border-radius: 100% 18% 100% 18%;
+  background: #8cca94;
+  transform: rotate(-18deg);
+}
+
+.towerGlyph-frost .towerGlyphAim::before,
+.towerGlyph-frost .towerGlyphAim::after {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(219, 245, 216, .86);
+}
+
+.towerGlyph-frost .towerGlyphAim::before { right: -4px; top: -2px; }
+.towerGlyph-frost .towerGlyphAim::after { right: -8px; top: 4px; transform: scale(.7); }
+
+.towerGlyph-frost .towerGlyphFruit {
+  left: 16px;
+  top: 20px;
+  width: 14px;
+  height: 15px;
+  border: 1px solid rgba(69, 130, 85, .38);
+  border-radius: 50% 50% 56% 44%;
+  background: #d9f0cf;
+  box-shadow: inset 3px 3px 0 rgba(255, 255, 238, .46);
+}
+
+.towerGlyph-rail .towerGlyphPlant {
+  left: 9px;
+  top: 12px;
+  width: 27px;
+  height: 27px;
+  clip-path: polygon(50% 0, 60% 16%, 75% 5%, 78% 24%, 98% 20%, 87% 39%, 100% 50%, 83% 58%, 95% 77%, 74% 75%, 70% 98%, 54% 83%, 41% 100%, 34% 80%, 13% 91%, 18% 68%, 0 58%, 18% 45%, 4% 28%, 26% 28%, 28% 7%, 43% 20%);
+  background: #75964f;
+}
+
+.towerGlyph-rail .towerGlyphAim {
+  left: 30px;
+  top: 9px;
+  width: 4px;
+  height: 21px;
+  border-radius: 999px;
+  background: #765036;
+  transform: rotate(51deg);
+  transform-origin: bottom center;
+}
+
+.towerGlyph-rail .towerGlyphAim::before,
+.towerGlyph-rail .towerGlyphAim::after {
+  top: -2px;
+  width: 3px;
+  height: 11px;
+  border-radius: 999px;
+  background: #765036;
+  transform-origin: bottom center;
+}
+
+.towerGlyph-rail .towerGlyphAim::before { left: -3px; transform: rotate(-34deg); }
+.towerGlyph-rail .towerGlyphAim::after { right: -3px; transform: rotate(34deg); }
+
+.towerGlyph-rail .towerGlyphFruit {
+  left: 15px;
+  top: 18px;
+  width: 17px;
+  height: 18px;
+  border: 1px solid rgba(78, 45, 28, .42);
+  border-radius: 47% 53% 50% 50%;
+  background: linear-gradient(180deg, #d7aa70 0 27%, #955b35 28% 100%);
+  box-shadow: inset 3px 3px 0 rgba(255, 236, 201, .2);
+}
 
 .enemyGlyphBody {
   background: color-mix(in srgb, var(--enemy-color) 55%, #5d704b);
